@@ -33,11 +33,13 @@ const Messages = () => {
     if (!user || !profile) return;
     const load = async () => {
       const col = profile.role === 'organizer' ? 'organizer_id' : 'sponsor_id';
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('conversations')
         .select('id, events(name), organizer:users!conversations_organizer_id_fkey(full_name, organization_name), sponsor:users!conversations_sponsor_id_fkey(full_name, organization_name)')
         .eq(col, user.id)
         .order('created_at', { ascending: false });
+
+      if (error) console.error('[Messages] conversations error:', error);
 
       setConversations(data?.map((c: any) => {
         const other = profile.role === 'organizer' ? c.sponsor : c.organizer;

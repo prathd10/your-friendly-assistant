@@ -20,19 +20,25 @@ const ConnectionRequests = () => {
   const [processing, setProcessing] = useState<string | null>(null);
 
   const loadRequests = async () => {
-    if (!user) return;
-
-    const { data: inc } = await supabase
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    const { data: inc, error: incErr } = await supabase
       .from('connection_requests')
       .select('*, sender:users!connection_requests_sender_id_fkey(*), receiver:users!connection_requests_receiver_id_fkey(*), event:events(*)')
       .eq('receiver_id', user.id)
       .order('created_at', { ascending: false });
 
-    const { data: out } = await supabase
+    if (incErr) console.error('[Requests] incoming error:', incErr);
+
+    const { data: out, error: outErr } = await supabase
       .from('connection_requests')
       .select('*, sender:users!connection_requests_sender_id_fkey(*), receiver:users!connection_requests_receiver_id_fkey(*), event:events(*)')
       .eq('sender_id', user.id)
       .order('created_at', { ascending: false });
+
+    if (outErr) console.error('[Requests] outgoing error:', outErr);
 
     setIncoming(inc || []);
     setOutgoing(out || []);

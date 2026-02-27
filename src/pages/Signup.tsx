@@ -25,19 +25,28 @@ const Signup = () => {
       toast.error('Fields must be under 100 characters');
       return;
     }
+
     setLoading(true);
-    const { error } = await signUp(email, password, {
-      role,
-      full_name: fullName.trim(),
-      organization_name: orgName.trim(),
-      city: city.trim(),
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      const { error } = await signUp(email, password, {
+        role,
+        full_name: fullName.trim(),
+        organization_name: orgName.trim(),
+        city: city.trim(),
+      });
+
+      if (error) {
+        toast.error(error.message || 'Unable to create account right now. Please try again.');
+        return;
+      }
+
       toast.success('Account created! Check your email to confirm.');
       navigate('/login');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to create account right now. Please try again.';
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 

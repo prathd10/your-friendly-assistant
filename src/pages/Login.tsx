@@ -17,12 +17,19 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await signIn(email, password);
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast.error(error.message || 'Unable to sign in right now. Please try again.');
+        return;
+      }
       navigate('/dashboard');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to sign in right now. Please try again.';
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 

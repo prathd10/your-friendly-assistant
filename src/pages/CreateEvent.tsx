@@ -35,6 +35,7 @@ const CreateEvent = () => {
     website_url: '', social_media_reach: '',
     past_sponsors: '', sponsorship_tiers: '',
     usp: '', media_coverage: '',
+    sponsor_deliverables: '',
   });
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -120,6 +121,7 @@ const CreateEvent = () => {
       sponsorship_tiers: form.sponsorship_tiers.trim() || null,
       usp: form.usp.trim() || null,
       media_coverage: form.media_coverage.trim() || null,
+      sponsor_deliverables: form.sponsor_deliverables.trim() || null,
     }).select('id').single();
 
     if (error) {
@@ -255,6 +257,13 @@ const CreateEvent = () => {
               <Textarea
                 placeholder="Why should a sponsor choose YOUR event? What ROI can they expect? Highlight unique value propositions..."
                 value={form.usp} onChange={set('usp')} maxLength={1000} rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground">Sponsor Deliverables</Label>
+              <Textarea
+                placeholder={"What will sponsors receive in return?\n• Logo placement on banners, standees & stage backdrop\n• Social media shoutouts (3 posts + stories)\n• Dedicated stall/booth space\n• MC mentions during event\n• Post-event report with reach & engagement data\n• Photo/video content featuring sponsor branding"}
+                value={form.sponsor_deliverables} onChange={set('sponsor_deliverables')} maxLength={2000} rows={5}
               />
             </div>
             <div className="space-y-2">

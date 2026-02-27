@@ -24,16 +24,40 @@ CREATE TABLE public.events (
   category TEXT NOT NULL,
   description TEXT DEFAULT '',
   city TEXT NOT NULL,
+  state TEXT DEFAULT '',
+  venue_name TEXT DEFAULT '',
+  full_address TEXT DEFAULT '',
   latitude DOUBLE PRECISION,
   longitude DOUBLE PRECISION,
   budget_required INTEGER NOT NULL DEFAULT 0,
   audience_size INTEGER NOT NULL DEFAULT 0,
+  expected_footfall INTEGER NOT NULL DEFAULT 0,
+  previous_year_footfall INTEGER,
   target_demographics TEXT DEFAULT '',
   tags TEXT[] DEFAULT '{}',
   event_date DATE NOT NULL,
+  event_end_date DATE,
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'closed')),
+  pitch_deck_url TEXT,
+  website_url TEXT,
+  social_media_reach INTEGER,
+  event_lineup TEXT DEFAULT '',
+  past_sponsors TEXT,
+  sponsorship_tiers TEXT,
+  usp TEXT,
+  media_coverage TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Storage bucket for pitch decks
+INSERT INTO storage.buckets (id, name, public) VALUES ('pitch-decks', 'pitch-decks', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policy: authenticated users can upload pitch decks
+CREATE POLICY "Users can upload pitch decks" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'pitch-decks' AND auth.uid() IS NOT NULL);
+CREATE POLICY "Anyone can view pitch decks" ON storage.objects
+  FOR SELECT USING (bucket_id = 'pitch-decks');
 
 -- 3. Matches
 CREATE TABLE public.matches (

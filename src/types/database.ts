@@ -27,14 +27,28 @@ export interface Event {
   category: string;
   description: string;
   city: string;
+  state: string;
+  venue_name: string;
+  full_address: string;
   latitude: number | null;
   longitude: number | null;
   budget_required: number;
   audience_size: number;
+  expected_footfall: number;
+  previous_year_footfall: number | null;
   target_demographics: string;
   tags: string[];
   event_date: string;
+  event_end_date: string | null;
   status: EventStatus;
+  pitch_deck_url: string | null;
+  website_url: string | null;
+  social_media_reach: number | null;
+  event_lineup: string;
+  past_sponsors: string | null;
+  sponsorship_tiers: string | null;
+  usp: string | null;
+  media_coverage: string | null;
   created_at: string;
 }
 

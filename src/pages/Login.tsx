@@ -29,13 +29,13 @@ const Login = () => {
       const { error } = await signIn(email, password);
       if (error) {
         toast.error(error.message || 'Unable to sign in right now. Please try again.');
-      } else {
-        navigate('/dashboard', { replace: true });
+        setLoading(false);
       }
+      // On success, keep loading=true. The useEffect watching `user` will
+      // handle navigation once onAuthStateChange fires and updates user state.
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in right now. Please try again.';
       toast.error(message);
-    } finally {
       setLoading(false);
     }
   };

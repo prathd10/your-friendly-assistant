@@ -4,8 +4,18 @@ const DEMO_PASSWORD = 'Demo@12345';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const REQUEST_TIMEOUT_MS = 15000;
+
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'Unknown error';
+
+const withTimeout = async <T>(promise: Promise<T>, label: string): Promise<T> => {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(`Timeout while trying to ${label}`)), REQUEST_TIMEOUT_MS);
+  });
+
+  return Promise.race([promise, timeoutPromise]);
+};
 
 const organizers = [
   { email: 'techfest@kjsce.demo', full_name: 'Arjun Mehta', organization_name: 'KJSCE TechFest', city: 'Mumbai', latitude: 19.0456, longitude: 72.8899 },
@@ -37,18 +47,24 @@ async function createUser(
   onProgress: (msg: string) => void
 ): Promise<string | null> {
   try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: DEMO_PASSWORD,
-      options: { data: metadata },
-    });
+    const { data, error } = await withTimeout(
+      supabase.auth.signUp({
+        email,
+        password: DEMO_PASSWORD,
+        options: { data: metadata },
+      }),
+      `sign up ${email}`
+    );
 
     if (error) {
       onProgress(`⚠️ ${email}: ${error.message}`);
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: DEMO_PASSWORD,
-      });
+      const { data: signInData, error: signInError } = await withTimeout(
+        supabase.auth.signInWithPassword({
+          email,
+          password: DEMO_PASSWORD,
+        }),
+        `sign in ${email}`
+      );
 
       if (signInError) {
         onProgress(`⚠️ ${email}: ${signInError.message}`);
@@ -69,10 +85,11 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
   onProgress('Creating organizer accounts...');
 
   // Sign out current user first
-  await supabase.auth.signOut();
+  await withTimeout(supabase.auth.signOut(), 'sign out current session');
 
   const organizerIds: string[] = [];
   for (const org of organizers) {
+    onProgress(`Creating organizer: ${org.email}`);
     const id = await createUser(org.email, {
       role: 'organizer',
       full_name: org.full_name,
@@ -94,6 +111,7 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
   onProgress('Creating sponsor accounts...');
   const sponsorIds: string[] = [];
   for (const sp of sponsors) {
+    onProgress(`Creating sponsor: ${sp.email}`);
     const id = await createUser(sp.email, {
       role: 'sponsor',
       full_name: sp.full_name,

@@ -51,9 +51,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Set up listener FIRST
+    console.log('[Auth] Setting up auth listener');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log('[Auth] State changed:', _event, !!session?.user);
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchProfile(session.user.id);
@@ -64,8 +65,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Then check existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('[Auth] Existing session:', !!session?.user);
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchProfile(session.user.id);

@@ -14,6 +14,7 @@ import MyEvents from "./pages/MyEvents";
 import BrowseEvents from "./pages/BrowseEvents";
 import Matches from "./pages/Matches";
 import Messages from "./pages/Messages";
+import Seed from "./pages/Seed";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/seed" element={<Seed />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route path="/dashboard" element={<Dashboard />} />

@@ -18,9 +18,13 @@ const OrganizerDashboard = () => {
     const load = async () => {
       const { data: events } = await supabase.from('events').select('id, name, category').eq('organizer_id', user.id);
       const eventIds = events?.map((e) => e.id) || [];
-      const { count: matchCount } = await supabase.from('matches').select('*', { count: 'exact', head: true }).in('event_id', eventIds.length ? eventIds : ['none']);
+      if (!eventIds.length) {
+        setStats({ events: 0, matches: 0, messages: 0, sponsors: 0 });
+        return;
+      }
+      const { count: matchCount } = await supabase.from('matches').select('*', { count: 'exact', head: true }).in('event_id', eventIds);
       const { count: msgCount } = await supabase.from('conversations').select('*', { count: 'exact', head: true }).eq('organizer_id', user.id);
-      const { data: matchesPerEvent } = await supabase.from('matches').select('event_id').in('event_id', eventIds.length ? eventIds : ['none']);
+      const { data: matchesPerEvent } = await supabase.from('matches').select('event_id').in('event_id', eventIds);
 
       const sponsorIds = new Set<string>();
       matchesPerEvent?.forEach((m) => sponsorIds.add(m.event_id));

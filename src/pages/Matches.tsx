@@ -28,7 +28,7 @@ const Matches = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user || !profile) return;
+    if (!user || !profile) { setLoading(false); return; }
     const load = async () => {
       if (profile.role === 'organizer') {
         const { data: events } = await supabase.from('events').select('id, name, category, city').eq('organizer_id', user.id);

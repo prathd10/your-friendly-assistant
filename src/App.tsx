@@ -12,6 +12,9 @@ import Dashboard from "./pages/Dashboard";
 import CreateEvent from "./pages/CreateEvent";
 import MyEvents from "./pages/MyEvents";
 import BrowseEvents from "./pages/BrowseEvents";
+import BrowseSponsors from "./pages/BrowseSponsors";
+import ConnectionRequests from "./pages/ConnectionRequests";
+import EditSponsorProfile from "./pages/EditSponsorProfile";
 import Matches from "./pages/Matches";
 import Messages from "./pages/Messages";
 import Seed from "./pages/Seed";
@@ -36,6 +39,9 @@ const App = () => (
               <Route path="/create-event" element={<CreateEvent />} />
               <Route path="/my-events" element={<MyEvents />} />
               <Route path="/browse-events" element={<BrowseEvents />} />
+              <Route path="/browse-sponsors" element={<BrowseSponsors />} />
+              <Route path="/requests" element={<ConnectionRequests />} />
+              <Route path="/edit-profile" element={<EditSponsorProfile />} />
               <Route path="/matches" element={<Matches />} />
               <Route path="/messages" element={<Messages />} />
             </Route>

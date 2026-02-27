@@ -1,5 +1,7 @@
 export type UserRole = 'organizer' | 'sponsor';
 export type EventStatus = 'draft' | 'active' | 'closed';
+export type RequestStatus = 'pending' | 'accepted' | 'rejected';
+export type RequestType = 'sponsor_to_organizer' | 'organizer_to_sponsor';
 
 export interface UserProfile {
   id: string;
@@ -10,6 +12,7 @@ export interface UserProfile {
   latitude: number | null;
   longitude: number | null;
   preferences: SponsorPreferences | null;
+  business_description: string;
   created_at: string;
 }
 
@@ -51,6 +54,20 @@ export interface Event {
   media_coverage: string | null;
   sponsor_deliverables: string | null;
   created_at: string;
+}
+
+export interface ConnectionRequest {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  event_id: string | null;
+  request_type: RequestType;
+  status: RequestStatus;
+  message: string;
+  created_at: string;
+  sender?: UserProfile;
+  receiver?: UserProfile;
+  event?: Event;
 }
 
 export interface Match {

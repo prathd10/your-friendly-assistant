@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, CalendarPlus, Calendar, Users, MessageSquare, Search, LogOut, Sparkles
+  LayoutDashboard, CalendarPlus, Calendar, Users, MessageSquare, Search, LogOut, Sparkles, UserCircle, Link2
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -14,6 +14,8 @@ const organizerItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Create Event', url: '/create-event', icon: CalendarPlus },
   { title: 'My Events', url: '/my-events', icon: Calendar },
+  { title: 'Browse Sponsors', url: '/browse-sponsors', icon: Search },
+  { title: 'Requests', url: '/requests', icon: Link2 },
   { title: 'Matches', url: '/matches', icon: Sparkles },
   { title: 'Messages', url: '/messages', icon: MessageSquare },
 ];
@@ -21,8 +23,10 @@ const organizerItems = [
 const sponsorItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Browse Events', url: '/browse-events', icon: Search },
+  { title: 'Requests', url: '/requests', icon: Link2 },
   { title: 'Matches', url: '/matches', icon: Sparkles },
   { title: 'Messages', url: '/messages', icon: MessageSquare },
+  { title: 'Edit Profile', url: '/edit-profile', icon: UserCircle },
 ];
 
 export function AppSidebar() {

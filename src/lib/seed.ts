@@ -2,6 +2,11 @@ import { supabase } from '@/lib/supabase';
 
 const DEMO_PASSWORD = 'Demo@12345';
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : 'Unknown error';
+
 const organizers = [
   { email: 'techfest@kjsce.demo', full_name: 'Arjun Mehta', organization_name: 'KJSCE TechFest', city: 'Mumbai', latitude: 19.0456, longitude: 72.8899 },
   { email: 'moksha@nmims.demo', full_name: 'Priya Sharma', organization_name: 'NMIMS Moksha', city: 'Mumbai', latitude: 19.1095, longitude: 72.8370 },
@@ -26,19 +31,38 @@ const events = [
   { name: "Malhar Sports Fest", category: 'Sports', description: "Xavier's annual inter-college sports tournament. Cricket, football, basketball, athletics, and e-sports competitions across 3 days.", city: 'Mumbai', latitude: 18.9432, longitude: 72.8310, budget_required: 200000, audience_size: 1800, target_demographics: 'College athletes 18-25', tags: ['sports', 'cricket', 'football', 'esports', 'college fest'], event_date: '2026-04-28', status: 'active' },
 ];
 
-async function createUser(email: string, metadata: Record<string, any>): Promise<string | null> {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password: DEMO_PASSWORD,
-    options: { data: metadata },
-  });
-  if (error) {
-    console.log(`User ${email} may already exist: ${error.message}`);
-    // Try signing in instead
-    const { data: signInData } = await supabase.auth.signInWithPassword({ email, password: DEMO_PASSWORD });
-    return signInData?.user?.id || null;
+async function createUser(
+  email: string,
+  metadata: Record<string, any>,
+  onProgress: (msg: string) => void
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: DEMO_PASSWORD,
+      options: { data: metadata },
+    });
+
+    if (error) {
+      onProgress(`⚠️ ${email}: ${error.message}`);
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: DEMO_PASSWORD,
+      });
+
+      if (signInError) {
+        onProgress(`⚠️ ${email}: ${signInError.message}`);
+        return null;
+      }
+
+      return signInData?.user?.id || null;
+    }
+
+    return data?.user?.id || null;
+  } catch (error) {
+    onProgress(`❌ ${email}: ${getErrorMessage(error)}`);
+    return null;
   }
-  return data?.user?.id || null;
 }
 
 export async function seedDemoData(onProgress: (msg: string) => void) {
@@ -54,15 +78,18 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
       full_name: org.full_name,
       organization_name: org.organization_name,
       city: org.city,
-    });
+    }, onProgress);
     if (id) {
       organizerIds.push(id);
       // Update profile with lat/lng
       await supabase.from('users').update({ latitude: org.latitude, longitude: org.longitude }).eq('id', id);
     }
-    await new Promise((r) => setTimeout(r, 500)); // rate limit
+    await sleep(500); // rate limit
   }
   onProgress(`Created ${organizerIds.length} organizers`);
+  if (organizerIds.length === 0) {
+    throw new Error('No organizer accounts were created. Check Auth settings and try again.');
+  }
 
   onProgress('Creating sponsor accounts...');
   const sponsorIds: string[] = [];
@@ -72,7 +99,7 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
       full_name: sp.full_name,
       organization_name: sp.organization_name,
       city: sp.city,
-    });
+    }, onProgress);
     if (id) {
       sponsorIds.push(id);
       await supabase.from('users').update({
@@ -81,9 +108,12 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
         preferences: sp.preferences,
       }).eq('id', id);
     }
-    await new Promise((r) => setTimeout(r, 500));
+    await sleep(500);
   }
   onProgress(`Created ${sponsorIds.length} sponsors`);
+  if (sponsorIds.length === 0) {
+    throw new Error('No sponsor accounts were created. Check Auth settings and try again.');
+  }
 
   // Sign in as first organizer to create events
   onProgress('Creating events...');
@@ -105,14 +135,14 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
     } else {
       console.error('Event creation error:', error);
     }
-    await new Promise((r) => setTimeout(r, 300));
+    await sleep(300);
   }
 
   // Run matching for each event
   onProgress('Running matching algorithm...');
   for (const eid of eventIds) {
     await supabase.rpc('calculate_matches', { p_event_id: eid });
-    await new Promise((r) => setTimeout(r, 300));
+    await sleep(300);
   }
   onProgress('Matches calculated!');
 
@@ -171,7 +201,7 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
           receiver_id: receiverId,
           content: msg.content,
         });
-        await new Promise((r) => setTimeout(r, 200));
+        await sleep(200);
       }
       onProgress(`Created conversation ${i + 1} with ${sampleMessages[i].length} messages`);
     }

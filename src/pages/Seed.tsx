@@ -11,10 +11,18 @@ const Seed = () => {
 
   const run = async () => {
     setRunning(true);
+    setDone(false);
     setLogs([]);
-    await seedDemoData((msg) => setLogs((prev) => [...prev, msg]));
-    setRunning(false);
-    setDone(true);
+
+    try {
+      await seedDemoData((msg) => setLogs((prev) => [...prev, msg]));
+      setDone(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error during seeding';
+      setLogs((prev) => [...prev, `❌ Seed failed: ${message}`]);
+    } finally {
+      setRunning(false);
+    }
   };
 
   return (

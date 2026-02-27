@@ -30,21 +30,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+  const fetchProfile = async (userId: string, retries = 3): Promise<void> => {
+    const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
       .single();
-    setProfile(data);
+    if (data) {
+      setProfile(data);
+    } else if (retries > 0) {
+      // Profile might not exist yet if the trigger hasn't fired
+      await new Promise((r) => setTimeout(r, 1000));
+      return fetchProfile(userId, retries - 1);
+    }
   };
 
   useEffect(() => {
+    // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 500);
+          await fetchProfile(session.user.id);
         } else {
           setProfile(null);
         }
@@ -52,10 +59,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Then check existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
       }
       setLoading(false);
     });

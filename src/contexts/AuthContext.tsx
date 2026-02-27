@@ -56,12 +56,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (_event, session) => {
         console.log('[Auth] State changed:', _event, !!session?.user);
         setUser(session?.user ?? null);
+        // Set loading false IMMEDIATELY so navigation can proceed
+        setLoading(false);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Fetch profile in background - don't block navigation
+          fetchProfile(session.user.id);
         } else {
           setProfile(null);
         }
-        setLoading(false);
       }
     );
 

@@ -49,6 +49,7 @@ export interface Event {
   sponsorship_tiers: string | null;
   usp: string | null;
   media_coverage: string | null;
+  sponsor_deliverables: string | null;
   created_at: string;
 }
 

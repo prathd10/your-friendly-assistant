@@ -63,7 +63,7 @@ const BrowseEvents = () => {
         .select('id')
         .eq('event_id', event.id)
         .eq('sponsor_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         toast.info('You are already connected for this event.');

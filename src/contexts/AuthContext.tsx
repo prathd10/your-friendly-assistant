@@ -77,17 +77,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     organization_name: string;
     city: string;
   }) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: metadata },
-    });
-    return { error: error as Error | null };
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: metadata },
+      });
+      return { error: error as Error | null };
+    } catch (error) {
+      return { error: (error instanceof Error ? error : new Error('Network error. Please try again.')) as Error };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error as Error | null };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error: error as Error | null };
+    } catch (error) {
+      return { error: (error instanceof Error ? error : new Error('Network error. Please try again.')) as Error };
+    }
   };
 
   const signOut = async () => {

@@ -31,17 +31,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string, retries = 3): Promise<void> => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (data) {
-      setProfile(data);
-    } else if (retries > 0) {
-      // Profile might not exist yet if the trigger hasn't fired
-      await new Promise((r) => setTimeout(r, 1000));
-      return fetchProfile(userId, retries - 1);
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (data) {
+        setProfile(data);
+      } else if (retries > 0) {
+        await new Promise((r) => setTimeout(r, 1000));
+        return fetchProfile(userId, retries - 1);
+      } else {
+        console.error('Failed to fetch profile after retries', error);
+      }
+    } catch (err) {
+      console.error('Profile fetch error:', err);
     }
   };
 

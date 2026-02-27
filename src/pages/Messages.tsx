@@ -6,7 +6,7 @@ import { Message } from '@/types/database';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, MessageSquare } from 'lucide-react';
+import { Send, MessageSquare, Lock } from 'lucide-react';
 
 interface ConvItem {
   id: string;
@@ -25,6 +25,8 @@ const Messages = () => {
   const [newMsg, setNewMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const isSponsor = profile?.role === 'sponsor';
 
   // Load conversations
   useEffect(() => {
@@ -65,7 +67,6 @@ const Messages = () => {
     };
     load();
 
-    // Realtime subscription
     const channel = supabase
       .channel(`messages:${activeConv}`)
       .on('postgres_changes', {
@@ -84,11 +85,8 @@ const Messages = () => {
 
   const sendMessage = async () => {
     if (!newMsg.trim() || !activeConv || !user) return;
+    if (!isSponsor) return; // Only sponsors can send messages
     if (newMsg.length > 2000) return;
-
-    // Find receiver
-    const conv = conversations.find((c) => c.id === activeConv);
-    if (!conv) return;
 
     const { data: convData } = await supabase
       .from('conversations')
@@ -168,19 +166,28 @@ const Messages = () => {
                 })}
                 <div ref={bottomRef} />
               </div>
-              <div className="p-3 border-t border-border/30 flex gap-2">
-                <Input
-                  placeholder="Type a message..."
-                  value={newMsg}
-                  onChange={(e) => setNewMsg(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                  maxLength={2000}
-                  className="flex-1"
-                />
-                <Button size="icon" onClick={sendMessage} disabled={!newMsg.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+
+              {/* Message input - only for sponsors */}
+              {isSponsor ? (
+                <div className="p-3 border-t border-border/30 flex gap-2">
+                  <Input
+                    placeholder="Type a message..."
+                    value={newMsg}
+                    onChange={(e) => setNewMsg(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                    maxLength={2000}
+                    className="flex-1"
+                  />
+                  <Button size="icon" onClick={sendMessage} disabled={!newMsg.trim()}>
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="p-3 border-t border-border/30 flex items-center gap-2 text-muted-foreground text-sm">
+                  <Lock className="h-4 w-4" />
+                  <span>Only sponsors can send messages in this conversation.</span>
+                </div>
+              )}
             </>
           )}
         </Card>

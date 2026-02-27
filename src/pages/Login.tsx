@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,15 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect to dashboard once user is authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,13 +29,14 @@ const Login = () => {
       const { error } = await signIn(email, password);
       if (error) {
         toast.error(error.message || 'Unable to sign in right now. Please try again.');
+        setLoading(false);
         return;
       }
-      navigate('/dashboard');
+      // Don't navigate here — the useEffect above will handle it
+      // once the auth state updates
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in right now. Please try again.';
       toast.error(message);
-    } finally {
       setLoading(false);
     }
   };

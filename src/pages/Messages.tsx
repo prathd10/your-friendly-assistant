@@ -87,7 +87,7 @@ const Messages = () => {
 
   const sendMessage = async () => {
     if (!newMsg.trim() || !activeConv || !user) return;
-    if (!isSponsor) return; // Only sponsors can send messages
+    if (!isSponsor && messages.length === 0) return; // Organizers cannot send the first message
     if (newMsg.length > 2000) return;
 
     const { data: convData } = await supabase
@@ -169,8 +169,8 @@ const Messages = () => {
                 <div ref={bottomRef} />
               </div>
 
-              {/* Message input - only for sponsors */}
-              {isSponsor ? (
+              {/* Message input - sponsors can always send, organizers only if messages exist */}
+              {isSponsor || messages.length > 0 ? (
                 <div className="p-3 border-t border-border/30 flex gap-2">
                   <Input
                     placeholder="Type a message..."
@@ -187,7 +187,7 @@ const Messages = () => {
               ) : (
                 <div className="p-3 border-t border-border/30 flex items-center gap-2 text-muted-foreground text-sm">
                   <Lock className="h-4 w-4" />
-                  <span>Only sponsors can send messages in this conversation.</span>
+                  <span>Waiting for the sponsor to send the first message.</span>
                 </div>
               )}
             </>

@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle, Users, Calendar, MessageSquare, ShieldCheck, Zap, Building, Briefcase, Sparkles, Film } from "lucide-react";
+import { ArrowRight, CheckCircle, Users, Calendar, MessageSquare, ShieldCheck, Zap, Building, Briefcase, Sparkles, Film, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EcosystemChart } from "@/components/EcosystemChart";
 import EventsNearMe from "@/components/EventsNearMe";
 
 const Index = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary/20">
       {/* Navigation */}
@@ -27,6 +30,47 @@ const Index = () => {
             <Link to="/signup">
               <Button size="sm">Get Started</Button>
             </Link>
+          </div>
+
+          {/* Mobile Menu */}
+          <div className="md:hidden">
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] border-l-border/30 bg-background/95 backdrop-blur-xl">
+                <SheetHeader className="text-left mb-8">
+                  <SheetTitle className="text-xl font-bold flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
+                      YF
+                    </div>
+                    <span>Navigation</span>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-6">
+                  <Link to="/browse-sponsors" onClick={() => setIsMenuOpen(false)} className="text-lg font-bold hover:text-primary transition-colors flex items-center gap-3">
+                    <Building className="h-5 w-5 text-primary" /> Browse Sponsors
+                  </Link>
+                  <Link to="/browse-events" onClick={() => setIsMenuOpen(false)} className="text-lg font-bold hover:text-primary transition-colors flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-primary" /> Browse Events
+                  </Link>
+                  <Link to="/browse-creators" onClick={() => setIsMenuOpen(false)} className="text-lg font-bold hover:text-primary transition-colors flex items-center gap-3">
+                    <Users className="h-5 w-5 text-primary" /> Browse Creators
+                  </Link>
+                  <hr className="border-border/30" />
+                  <div className="flex flex-col gap-3">
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)} className="w-full">
+                      <Button variant="outline" className="w-full h-12 text-lg font-bold">Login</Button>
+                    </Link>
+                    <Link to="/signup" onClick={() => setIsMenuOpen(false)} className="w-full">
+                      <Button className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20">Get Started</Button>
+                    </Link>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </nav>
@@ -103,16 +147,16 @@ const Index = () => {
             <h2 className="text-3xl font-bold md:text-5xl">The Power of Three</h2>
             <p className="mt-4 text-muted-foreground text-lg max-w-2xl mx-auto">A seamless collaboration engine built for the modern event landscape, ensuring every partner wins.</p>
           </div>
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="grid gap-4 md:gap-8 grid-cols-2 lg:grid-cols-3">
             <Card className="glass-card transition-all duration-300 hover:translate-y-[-4px]">
               <CardHeader className="space-y-4">
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Building className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">For Sponsors</CardTitle>
-                <CardDescription className="text-base">Maximize brand ROI with data-driven event sponsorships and verified creator reach.</CardDescription>
+                <CardTitle className="text-lg md:text-2xl">For Sponsors</CardTitle>
+                <CardDescription className="text-xs md:text-base line-clamp-2">Maximize brand ROI with data-driven event sponsorships.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 md:space-y-4 p-4 pt-0">
                 <ul className="space-y-3">
                   {["Targeted audience matching", "Direct access to event organizers", "Verified creator engagement data", "End-to-end campaign tracking"].map((text) => (
                     <li key={text} className="flex items-center gap-2 text-sm">
@@ -131,10 +175,10 @@ const Index = () => {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Calendar className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">For Organizers</CardTitle>
-                <CardDescription className="text-base">Secure funding from top brands and find reliable creators who align with your vision.</CardDescription>
+                <CardTitle className="text-lg md:text-2xl">For Organizers</CardTitle>
+                <CardDescription className="text-xs md:text-base line-clamp-2">Secure funding and find reliable creators for your vision.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 md:space-y-4 p-4 pt-0">
                 <ul className="space-y-3">
                   {["Automated sponsor pitch decks", "Direct connections to verified talent", "Unified event management hub", "Real-time collaboration tools"].map((text) => (
                     <li key={text} className="flex items-center gap-2 text-sm">
@@ -153,10 +197,10 @@ const Index = () => {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">For Creators</CardTitle>
-                <CardDescription className="text-base">Monetize your talent and grow your portfolio with high-profile brand collaborations.</CardDescription>
+                <CardTitle className="text-lg md:text-2xl">For Creators</CardTitle>
+                <CardDescription className="text-xs md:text-base line-clamp-2">Monetize your talent with high-profile collaborations.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 md:space-y-4 p-4 pt-0">
                 <ul className="space-y-3">
                   {["Verified Trust Score for more gigs", "Direct links to brands & sponsors", "Premium event opportunities", "Automated portfolio updates"].map((text) => (
                     <li key={text} className="flex items-center gap-2 text-sm">
@@ -180,7 +224,7 @@ const Index = () => {
       {/* Features Section */}
       <section id="features" className="py-24">
         <div className="container">
-          <div className="grid gap-16 lg:grid-cols-3">
+          <div className="grid gap-8 md:gap-16 grid-cols-2 lg:grid-cols-3">
             <div className="space-y-4">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Zap className="h-6 w-6 text-primary" />

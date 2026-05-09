@@ -93,12 +93,20 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden w-full;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    @apply overflow-x-hidden w-full;
   }
 }
 
 @layer components {
   .glass-card {
     @apply bg-card/80 backdrop-blur-xl border border-border/30 shadow-lg;
+  }
+  
+  .mobile-nav-active {
+    @apply fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden;
   }
 }

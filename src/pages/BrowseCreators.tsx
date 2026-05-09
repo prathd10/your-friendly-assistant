@@ -181,7 +181,7 @@ const BrowseCreators = () => {
       {filtered.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">No creators found.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3">
           {filtered.map((creator) => (
             <Card
               key={creator.id}
@@ -189,29 +189,26 @@ const BrowseCreators = () => {
               onClick={() => setSelectedCreator(creator)}
             >
               <CardContent className="p-5 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Users className="h-5 w-5 text-primary" />
+                <div className="flex items-start justify-between gap-1 sm:gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold flex items-center gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-xs sm:text-base flex items-center gap-1 truncate">
                         {creator.full_name}
                         {creator.verification_status === 'verified' && (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        )}
-                        {creator.match_score && creator.match_score > 60 && (
-                          <Sparkles className="h-4 w-4 text-amber-500" />
+                          <CheckCircle className="h-3 w-3 text-green-500 shrink-0" />
                         )}
                       </h3>
-                      <p className="text-xs text-muted-foreground">{creator.platform || 'Platform varies'}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{creator.platform || 'Platform varies'}</p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {creator.niche && <Badge variant="outline">{creator.niche}</Badge>}
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {creator.niche && <Badge variant="outline" className="text-[8px] sm:text-xs px-1 py-0">{creator.niche}</Badge>}
                     {/* Trust score mini indicator */}
                     {(() => { const ts = calcTrust(creator); return (
-                      <span className={`text-xs font-bold ${trustColor(ts)}`}>Trust {ts}</span>
+                      <span className={`text-[8px] sm:text-xs font-bold ${trustColor(ts)}`}>T {ts}</span>
                     ); })()}
                   </div>
                 </div>

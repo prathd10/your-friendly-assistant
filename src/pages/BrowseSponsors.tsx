@@ -130,7 +130,7 @@ const BrowseSponsors = () => {
       {filtered.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">No sponsors found.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3">
           {filtered.map((sponsor) => {
             const sp = prefs(sponsor);
             return (
@@ -139,20 +139,20 @@ const BrowseSponsors = () => {
                 className="glass-card border-border/30 hover:shadow-lg transition-all hover:-translate-y-0.5 cursor-pointer"
                 onClick={() => { setSelectedSponsor(sponsor); setSelectedEventId(''); }}
               >
-                <CardContent className="p-5 space-y-3">
-                  <div className="flex items-center gap-3">
+                <CardContent className="p-3 sm:p-5 space-y-2 sm:space-y-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     {sponsor.profile_photo ? (
-                      <img src={sponsor.profile_photo} alt="" className="h-10 w-10 rounded-full object-cover border border-border" />
+                      <img src={sponsor.profile_photo} alt="" className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover border border-border" />
                     ) : sponsor.organization_logo ? (
-                      <img src={sponsor.organization_logo} alt="" className="h-10 w-10 rounded-full object-contain border border-border bg-muted/50 p-1" />
+                      <img src={sponsor.organization_logo} alt="" className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-contain border border-border bg-muted/50 p-1" />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Building className="h-5 w-5 text-primary" />
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Building className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
                     )}
-                    <div>
-                      <h3 className="font-semibold">{sponsor.organization_name}</h3>
-                      <p className="text-xs text-muted-foreground">{sponsor.full_name}</p>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-xs sm:text-base truncate">{sponsor.organization_name}</h3>
+                      <p className="text-[10px] text-muted-foreground truncate">{sponsor.full_name}</p>
                     </div>
                   </div>
                   {sponsor.business_description && (

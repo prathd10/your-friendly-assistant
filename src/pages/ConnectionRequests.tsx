@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { IndianRupee, Users, FileText, Send, Eye, Globe, TrendingUp, Target, FileSignature, Loader2, Download, Lock, Clock, Check, X, Calendar, MapPin, Building } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { generateMOUDraft } from '@/lib/gemini';
+import { generateMOUDraft } from '@/lib/ai-service';
 import { downloadMOUAsPDF } from '@/lib/mou-pdf';
 import { Textarea } from '@/components/ui/textarea';
 

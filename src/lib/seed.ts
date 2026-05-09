@@ -140,9 +140,10 @@ async function createUser(
 }
 
 export async function seedDemoData(onProgress: (msg: string) => void) {
-  onProgress('Starting focused seeding...');
+  onProgress('🚀 Starting full system seeding...');
   await withTimeout(supabase.auth.signOut(), 'sign out current session');
   
+  // 1. Create Admin
   onProgress('Creating admin account...');
   await createUser(admin.email, {
     role: 'admin',
@@ -150,10 +151,51 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
     organization_name: admin.organization_name,
     city: admin.city,
   }, onProgress);
-  
-  onProgress('Creating creator accounts for verification...');
+
+  // 2. Create Organizers
+  onProgress('Creating organizers...');
+  const organizerIds: string[] = [];
+  for (const org of organizers) {
+    const id = await createUser(org.email, {
+      role: 'organizer',
+      full_name: org.full_name,
+      organization_name: org.organization_name,
+      city: org.city,
+    }, onProgress);
+    if (id) {
+       organizerIds.push(id);
+       await supabase.from('users').update({
+         latitude: org.latitude,
+         longitude: org.longitude
+       }).eq('id', id);
+    }
+    await sleep(300);
+  }
+
+  // 3. Create Sponsors
+  onProgress('Creating sponsors...');
+  const sponsorIds: string[] = [];
+  for (const sp of sponsors) {
+    const id = await createUser(sp.email, {
+      role: 'sponsor',
+      full_name: sp.full_name,
+      organization_name: sp.organization_name,
+      city: sp.city,
+    }, onProgress);
+    if (id) {
+       sponsorIds.push(id);
+       await supabase.from('users').update({
+         latitude: sp.latitude,
+         longitude: sp.longitude,
+         preferences: sp.preferences
+       }).eq('id', id);
+    }
+    await sleep(300);
+  }
+
+  // 4. Create Creators
+  onProgress('Creating creators...');
   for (const cr of creators) {
-    onProgress(`Creating creator: ${cr.email}`);
     const id = await createUser(cr.email, {
       role: 'creator',
       full_name: cr.full_name,
@@ -170,12 +212,63 @@ export async function seedDemoData(onProgress: (msg: string) => void) {
         engagement_rate: (cr as any).engagement_rate || 3.0,
         average_views: (cr as any).average_views || 5000,
         pricing_per_post: (cr as any).pricing_per_post || 2000,
-        verification_proof_urls: (cr as any).verification_proof_urls || []
       }).eq('id', id);
     }
-    await sleep(500);
+    await sleep(300);
   }
 
-  onProgress('✅ Seed complete! Admin and Creators are ready.');
+  // 5. Create Performers & Vendors
+  onProgress('Creating performers & vendors...');
+  const otherTalent = [...performers, ...vendors];
+  for (const t of otherTalent) {
+    const role = performers.includes(t) ? 'performer' : 'vendor';
+    const id = await createUser(t.email, {
+      role,
+      full_name: t.full_name,
+      organization_name: t.organization_name,
+      city: t.city,
+    }, onProgress);
+    if (id) {
+       await supabase.from('users').update({
+         business_description: t.business_description,
+         niche: performers.includes(t) ? 'Performance' : 'Service'
+       }).eq('id', id);
+    }
+    await sleep(200);
+  }
+
+  // 6. Create Events
+  onProgress('Creating demo events...');
+  const eventIds: string[] = [];
+  for (let i = 0; i < events.length; i++) {
+    const ev = events[i];
+    const orgId = organizerIds[i % organizerIds.length];
+    const { data: newEv, error: evErr } = await supabase.from('events').insert({
+      ...ev,
+      organizer_id: orgId
+    }).select().single();
+    if (newEv) eventIds.push(newEv.id);
+    await sleep(200);
+  }
+
+  // 7. Seed Initial Matches
+  onProgress('Pre-calculating smart matches...');
+  if (eventIds.length > 0 && sponsorIds.length > 0) {
+    const matchesToInsert = [];
+    for (const eventId of eventIds) {
+      for (const sponsorId of sponsorIds) {
+        matchesToInsert.push({
+          event_id: eventId,
+          sponsor_id: sponsorId,
+          match_score: Math.floor(Math.random() * 30) + 70, // 70-99%
+          match_reasons: ['Demographic Alignment', 'Location Affinity', 'Category Match'],
+          status: 'pending'
+        });
+      }
+    }
+    await supabase.from('matches').insert(matchesToInsert);
+  }
+
+  onProgress('✅ Full System Seed complete! Matches page should now be populated.');
   await supabase.auth.signOut();
 }

@@ -162,7 +162,7 @@ const BrowseVendors = () => {
       {filtered.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">No service providers found yet.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3">
           {filtered.map((vendor) => (
             <Card
               key={vendor.id}
@@ -170,25 +170,25 @@ const BrowseVendors = () => {
               onClick={() => setSelectedVendor(vendor)}
             >
               <CardContent className="p-5 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="flex items-start justify-between gap-1 sm:gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       {getIcon(vendor.niche || '')}
                     </div>
-                    <div>
-                      <h3 className="font-semibold flex items-center gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-xs sm:text-base flex items-center gap-1 truncate">
                         {vendor.organization_name || vendor.full_name}
                         {vendor.verification_status === 'verified' && (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-3 w-3 text-green-500 shrink-0" />
                         )}
                       </h3>
-                      <p className="text-xs text-muted-foreground">{vendor.city || 'India'}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{vendor.city || 'India'}</p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {vendor.niche && <Badge variant="outline">{vendor.niche}</Badge>}
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {vendor.niche && <Badge variant="outline" className="text-[8px] sm:text-xs px-1 py-0">{vendor.niche}</Badge>}
                     {(() => { const ts = calcTrust(vendor); return (
-                      <span className={`text-xs font-bold ${trustColor(ts)}`}>Trust {ts}</span>
+                      <span className={`text-[8px] sm:text-xs font-bold ${trustColor(ts)}`}>T {ts}</span>
                     ); })()}
                   </div>
                 </div>

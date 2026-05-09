@@ -1,3 +1,4 @@
+import { jsPDF } from "jspdf";
 
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY?.trim();
 
@@ -29,10 +30,34 @@ async function callOpenAI(messages: any[], model: string = "gpt-4o-mini", temper
   return data.choices[0].message.content;
 }
 
+const cleanDemographics = (demographics: any): string => {
+  if (!demographics) return 'N/A';
+  
+  // Handle object
+  if (typeof demographics === 'object') {
+    const d = demographics;
+    return `${d.gender?.join(', ') || 'All'} | Age ${d.ageRange?.join('-') || '18-40'} | ${d.profession?.join(', ') || d.customProfession || 'Various'}`;
+  }
+
+  // Handle JSON string
+  if (typeof demographics === 'string' && (demographics.startsWith('{') || demographics.startsWith('['))) {
+    try {
+      const d = JSON.parse(demographics);
+      return `${d.gender?.join(', ') || 'All'} | Age ${d.ageRange?.join('-') || '18-40'} | ${d.profession?.join(', ') || d.customProfession || 'Various'}`;
+    } catch (e) {
+      // Not valid JSON, return as is
+    }
+  }
+
+  return String(demographics);
+};
+
 export const generateEventPitch = async (eventData: any, _images: string[]) => {
   const tagsStr = Array.isArray(eventData.tags)
     ? eventData.tags.join(', ')
     : eventData.tags || 'N/A';
+
+  const demographics = cleanDemographics(eventData.target_demographics);
 
   const prompt = `
 You are a world-class pitch deck consultant. Your goal is to create a PREMIUM, sponsor-converting pitch deck.
@@ -50,7 +75,7 @@ EVENT DATA (use ALL of it):
 - Expected Footfall: ${eventData.expected_footfall}
 - Previous Year Footfall: ${eventData.previous_year_footfall || 'First Edition'}
 - Social Media Reach: ${eventData.social_media_reach || 'N/A'}
-- Target Audience: ${eventData.target_demographics || 'N/A'}
+- Target Audience: ${demographics || 'N/A'}
 - Tags: ${tagsStr}
 - Event Lineup / Activities: ${eventData.event_lineup || 'N/A'}
 - Budget Required: ₹${eventData.budget_required?.toLocaleString()}
@@ -172,7 +197,7 @@ SLIDE ORDER (mandatory):
           title: 'Audience Profile',
           content: ['Our audience consists of high-intent individuals seeking innovation.'],
           metrics: [
-            { label: 'Target Audience', value: eventData.target_demographics || 'Premium' },
+            { label: 'Target Audience', value: demographics || 'Premium' },
             { label: 'Expected Footfall', value: `${eventData.expected_footfall?.toLocaleString()}+` },
             { label: 'Growth', value: eventData.previous_year_footfall ? '40% YoY' : 'Inaugural' },
             { label: 'Reach', value: eventData.social_media_reach ? `${(eventData.social_media_reach/1000).toFixed(0)}K+` : 'Global' }
@@ -252,50 +277,87 @@ export const generateMOUDraft = async (req: any) => {
   const event = req.event;
 
   const prompt = `
-You are a Senior Legal Counsel. Draft a professional, comprehensive Memorandum of Understanding (MOU).
-Include ALL provided details concisely.
+You are a Senior Legal Counsel at an international law firm. 
+Draft an EXHAUSTIVE, high-stakes, and legally robust Memorandum of Understanding (MOU).
+Follow the structure and tone of a formal legal contract.
 
 PARTIES:
-- Organizer: ${recipient?.organization_name || recipient?.full_name}
-- Partner: ${otherUser?.organization_name || otherUser?.full_name}
-- Nature: ${req.request_type}
+- THE ORGANIZER: ${recipient?.organization_name || recipient?.full_name} (${recipient?.role})
+- THE PARTNER: ${otherUser?.organization_name || otherUser?.full_name} (${otherUser?.role})
+- PARTNER HANDLE: ${otherUser?.handle || otherUser?.full_name}
 
-EVENT SUMMARY:
-- Name: ${event?.name} | Category: ${event?.category}
-- Details: ${event?.description?.substring(0, 300)}...
-- USP: ${event?.usp || 'Premium engagement'}
-- Venue: ${event?.venue_name || event?.city}, ${event?.city}
-- Dates: ${event?.event_date} ${event?.event_end_date ? `to ${event?.event_end_date}` : ''}
-- Impact: ${event?.expected_footfall?.toLocaleString()} attendees | Reach: ${event?.social_media_reach ? (event?.social_media_reach/1000).toFixed(0) + 'K+' : 'N/A'}
+EVENT DATA:
+- NAME: ${event?.name}
+- VENUE: ${event?.venue_name || event?.city}, ${event?.city}
+- DATE: ${event?.event_date}
+- PROJECTIONS: ${event?.expected_footfall?.toLocaleString()} attendees | ${event?.social_media_reach ? (event?.social_media_reach/1000).toFixed(0) + 'K+' : '25K+'} digital reach
+- FINANCIALS: ₹${req.campaign_details?.budget || event?.budget_required || '4,000'}
 
-AGREED TERMS:
-- Budget: ₹${req.campaign_details?.budget || event?.budget_required || 'To be finalized'}
-- Deliverables: ${req.campaign_details?.deliverables || event?.sponsor_deliverables || 'Standard visibility'}
-- Context: "${req.message}"
+REQUIRED STRUCTURE:
 
-MOU STRUCTURE:
-1. TITLE: MEMORANDUM OF UNDERSTANDING (Centered, uppercase)
-2. PREAMBLE: Formal intent.
-3. EVENT SCOPE: Using name, date, and magnitude.
-4. MUTUAL OBLIGATIONS: Specific deliverables for both sides.
-5. FINANCIALS: Sponsorship amount and basic terms.
-6. LEGAL: IP, Confidentiality, and Liability clauses.
-7. TERMINATION: Notice periods.
-8. SIGNATURES: Formal blocks.
+1. TITLE: MEMORANDUM OF UNDERSTANDING (Centered)
+2. INTRODUCTION: Define parties with "hereinafter referred to as" terminology.
+3. PREAMBLE: Use at least three "WHEREAS" clauses defining the intent and nature of the collaboration.
+4. EVENT SCOPE: Detailed description of ${event?.name}, location, and projected impact.
+5. MUTUAL OBLIGATIONS:
+   - Specific, numbered obligations for THE ORGANIZER (Logistics, Branding, Support).
+   - Specific, numbered obligations for THE PARTNER (Content creation, Attendance, Reporting).
+6. FINANCIAL TERMS:
+   - Clause 6.1: Exact remuneration (₹${req.campaign_details?.budget || event?.budget_required || 'TBD'}).
+   - Clause 6.2: Payment schedule (e.g., 30 days post-event).
+   - Clause 6.3: Expense handling.
+7. LEGAL & INTELLECTUAL PROPERTY:
+   - Clause 7.1: Pre-existing vs Event-specific IP rights.
+   - Clause 7.2: Confidentiality obligations and exceptions.
+   - Clause 7.3: Liability, Indemnification, and Limitation of Liability.
+8. TERMINATION:
+   - Termination for Convenience (30-day notice).
+   - Termination for Cause (Material breach).
+9. SIGNATURES: Formal blocks for both parties.
 
-Note: NO markdown bold (**). Use UPPERCASE for section headers.
+RULES:
+- Use formal, authoritative legal English.
+- UPPERCASE for all major section headers.
+- NO markdown bolding (**).
+- Ensure the document feels "exhaustive" and covers all possible points.
+- Include placeholders like "[Effective Date]" or "[Assumed Address]" where necessary.
 `;
 
   try {
     const text = await callOpenAI([
-      { role: "system", content: "You are a Senior Legal Counsel drafting a professional MOU." },
+      { role: "system", content: "You are a Senior Legal Counsel. Draft a comprehensive, exhaustive legal MOU." },
       { role: "user", content: prompt }
     ], "gpt-4o-mini", 0.1);
     
-    return text || "MEMORANDUM OF UNDERSTANDING\n\n[DRAFT FAILED: Please try again or draft manually]";
+    return text || `MEMORANDUM OF UNDERSTANDING\n\n[DRAFT FAILED: Manual drafting required for ${event?.name}]`;
   } catch (error) {
     console.error("MOU Draft Error:", error);
-    return `MEMORANDUM OF UNDERSTANDING\n\nThis agreement is made between ${recipient?.organization_name || recipient?.full_name} and ${otherUser?.organization_name || otherUser?.full_name}.\n\nBoth parties agree to cooperate for the event: ${event?.name || 'Upcoming Project'}.\n\nDetails and formal terms to be discussed in the integrated chat.`;
+    // Exhaustive fallback template
+    return `MEMORANDUM OF UNDERSTANDING
+
+THIS MEMORANDUM OF UNDERSTANDING (hereinafter "MOU") is entered into on this [Effective Date], by and between ${recipient?.organization_name || recipient?.full_name} (The Organizer) and ${otherUser?.organization_name || otherUser?.full_name} (The Partner).
+
+PREAMBLE
+WHEREAS, The Organizer is hosting "${event?.name || 'The Event'}" and requires professional collaboration;
+WHEREAS, The Partner possesses the creative expertise to enhance the Event's impact;
+NOW, THEREFORE, the Parties agree as follows:
+
+1. EVENT SCOPE
+The Event "${event?.name}" will take place on ${event?.event_date} at ${event?.city}. Estimated audience: ${event?.expected_footfall?.toLocaleString() || 'Premium'}.
+
+2. FINANCIALS
+Total consideration of ₹${req.campaign_details?.budget || event?.budget_required || 'TBD'} to be paid as per terms.
+
+3. INTELLECTUAL PROPERTY & LEGAL
+All pre-existing IP remains with the respective Party. Both Parties agree to strict confidentiality.
+
+4. SIGNATURES
+
+__________________________
+For ${recipient?.organization_name || recipient?.full_name}
+
+__________________________
+For ${otherUser?.organization_name || otherUser?.full_name}`;
   }
 };
 
@@ -316,7 +378,7 @@ EVENT DATA:
 - Expected Footfall: ${eventData.expected_footfall}
 - Previous Footfall: ${eventData.previous_year_footfall || 'First Edition'}
 - Social Media Reach: ${eventData.social_media_reach || 'N/A'}
-- Target Audience: ${eventData.target_demographics || 'N/A'}
+- Target Audience: ${cleanDemographics(eventData.target_demographics)}
 - Event Lineup: ${eventData.event_lineup || 'N/A'}
 - Sponsorship Tiers: ${eventData.sponsorship_tiers || 'N/A'}
 - Sponsor Deliverables: ${eventData.sponsor_deliverables || 'N/A'}
@@ -407,98 +469,53 @@ Return ONLY valid JSON — no markdown, no explanation:
 };
 
 export const analyzeDiscoveryIntentNew = async (organizerPrompt: string) => {
-  console.log('--- Advanced Heuristic: analyzeDiscoveryIntentNew called ---');
-  
-  const text = organizerPrompt.toLowerCase();
-  const keywords: string[] = [];
-  
-  // 1. Role Detection (Expanded)
-  const rolesNeeded: string[] = [];
-  const roleKeywords = {
-    performer: ['singer', 'dancer', 'band', 'music', 'artist', 'dj', 'standup', 'comedian', 'talent', 'performance', 'musician', 'performer', 'emcee', 'anchor', 'host', 'magician', 'troupe'],
-    vendor: ['catering', 'food', 'sound', 'lighting', 'stage', 'decor', 'security', 'av', 'photography', 'venue', 'lights', 'vendor', 'equipment', 'videography', 'streaming', 'furniture', 'stall'],
-    sponsor: ['brand', 'funding', 'money', 'partner', 'investment', 'sponsor', 'capital', 'funds', 'grant', 'financial'],
-    creator: ['influencer', 'blogger', 'vlogger', 'social media', 'content', 'shoutout', 'followers', 'creator', 'unboxing', 'promotion', 'reach']
-  };
+  const prompt = `
+Analyze the following event planning request and extract key discovery criteria.
+Request: "${organizerPrompt}"
 
-  Object.entries(roleKeywords).forEach(([role, rKeywords]) => {
-    const matched = rKeywords.filter(k => text.includes(k));
-    if (matched.length > 0) {
-      rolesNeeded.push(role);
-      keywords.push(...matched);
-    }
-  });
+Return ONLY valid JSON:
+{
+  "category": "Tech|Cultural|Startup|Sports|Music|College Fest|Corporate|Art|Food|Health|Wedding|Gaming|Other",
+  "approximateBudget": number | null,
+  "city": "City Name" | null,
+  "rolesNeeded": [],
+  "keywords": ["keyword1", "keyword2"],
+  "date": "Date string" | null,
+  "eventSummary": "A short, engaging summary of what the user is looking for"
+}
 
-  const broadTriggers = ['host', 'plan', 'organize', 'arranging', 'setup', 'event', 'help', 'need help', 'booking'];
-  const isBroad = broadTriggers.some(t => text.includes(t));
+CRITICAL: Only include roles in "rolesNeeded" that are EXPLICITLY mentioned.
+- If user says "singer" or "band", include ONLY ["performer"].
+- If user says "brands" or "funding", include ONLY ["sponsor"].
+- If user says "lights" or "sound", include ONLY ["vendor"].
+- NEVER include all roles unless the user asks for "everything" or "all types of partners".
+- DO NOT be helpful by suggesting roles the user didn't ask for.
 
-  if (rolesNeeded.length === 0 || (isBroad && rolesNeeded.length < 3)) {
-    ['sponsor', 'creator', 'performer', 'vendor'].forEach(r => {
-      if (!rolesNeeded.includes(r)) rolesNeeded.push(r);
-    });
-  }
 
-  const venueKeywords = ['hotel', 'resort', 'college', 'campus', 'stadium', 'ground', 'ballroom', 'hall', 'indoor', 'outdoor', 'beach', 'cafe', 'rooftop', 'office', 'convention'];
-  const detectedVenues = venueKeywords.filter(v => text.includes(v));
-  keywords.push(...detectedVenues);
+Note: Only include roles that are CLEARLY requested (e.g., "singer" -> ["performer"], "brands" -> ["sponsor"]). 
+If the user is asking for general help with an event, include all relevant roles.
+Return only relevant categories.
+`;
 
-  const cities = ['mumbai', 'delhi', 'bangalore', 'pune', 'hyderabad', 'chennai', 'kolkata', 'ahmedabad', 'gurgaon', 'noida', 'jaipur', 'goa', 'indore', 'chandigarh'];
-  let detectedCity = null;
-  for (const city of cities) {
-    if (text.includes(city)) {
-      detectedCity = city.charAt(0).toUpperCase() + city.slice(1);
-      keywords.push(detectedCity);
-      break;
-    }
-  }
+  try {
+    const resultText = await callOpenAI([
+      { role: "system", content: "You are an event discovery assistant. Extract criteria from user prompts." },
+      { role: "user", content: prompt }
+    ], "gpt-4o-mini", 0.3);
 
-  const categories = ['Tech', 'Cultural', 'Startup', 'Sports', 'Music', 'College Fest', 'Corporate', 'Art', 'Food', 'Health', 'Wedding', 'Gaming'];
-  let detectedCategory = 'Other';
-  for (const cat of categories) {
-    if (text.includes(cat.toLowerCase())) {
-      detectedCategory = cat;
-      break;
-    }
-  }
-
-  let detectedDate = null;
-  const dateRegex = /(\d{1,2})(?:st|nd|rd|th)?[\s\.\/-]+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)/i;
-  const dateMatch = text.match(dateRegex);
-  
-  if (dateMatch) {
-    detectedDate = `${dateMatch[1]} ${dateMatch[2].charAt(0).toUpperCase() + dateMatch[2].slice(1).toLowerCase()}`;
-    keywords.push(detectedDate);
-  }
-
-  let approximateBudget = null;
-  const budgetMatch = text.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)(?:\s*-\s*(\d+(?:\.\d+)?))?\s*(k|lakh|l|cr|thousand|m|b)?/i);
-  
-  if (budgetMatch) {
-    let value1 = parseFloat(budgetMatch[1]);
-    let value2 = budgetMatch[2] ? parseFloat(budgetMatch[2]) : null;
-    const unit = budgetMatch[3]?.toLowerCase();
-    
-    const applyUnit = (val: number) => {
-      if (unit === 'k' || unit === 'thousand') return val * 1000;
-      if (unit === 'lakh' || unit === 'l') return val * 100000;
-      if (unit === 'cr') return val * 10000000;
-      return val;
+    const jsonStr = resultText.match(/\{[\s\S]*\}/)?.[0] || resultText;
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("Discovery Analysis Error:", error);
+    // Fallback to a basic interpretation if AI fails
+    return {
+      category: 'Other',
+      approximateBudget: null,
+      city: null,
+      rolesNeeded: ['sponsor', 'creator', 'performer', 'vendor'],
+      keywords: organizerPrompt.split(' ').slice(0, 5),
+      date: null,
+      eventSummary: `Searching for partners for: ${organizerPrompt.substring(0, 50)}...`
     };
-
-    value1 = applyUnit(value1);
-    if (value2) value2 = applyUnit(value2);
-    approximateBudget = value2 ? Math.round(value2) : Math.round(value1);
   }
-
-  const uniqueKeywords = Array.from(new Set(keywords)).map(k => k.charAt(0).toUpperCase() + k.slice(1));
-
-  return {
-    category: detectedCategory,
-    approximateBudget,
-    city: detectedCity,
-    rolesNeeded,
-    keywords: uniqueKeywords,
-    date: detectedDate,
-    eventSummary: `Planning ${detectedCategory} event ${detectedDate ? `on ${detectedDate}` : ''} ${detectedCity ? `in ${detectedCity}` : ''}...`
-  };
 };

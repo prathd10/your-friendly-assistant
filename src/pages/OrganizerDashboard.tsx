@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Users, MessageSquare, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Calendar, Users, MessageSquare, Sparkles, MapPin } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import VirtualWallet from '@/components/VirtualWallet';
 
@@ -13,11 +16,13 @@ const OrganizerDashboard = () => {
   const [stats, setStats] = useState({ events: 0, matches: 0, messages: 0, sponsors: 0 });
   const [matchData, setMatchData] = useState<{ name: string; matches: number }[]>([]);
   const [categoryData, setCategoryData] = useState<{ name: string; value: number }[]>([]);
+  const [eventsData, setEventsData] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data: events } = await supabase.from('events').select('id, name, category').eq('organizer_id', user.id);
+      const { data: events } = await supabase.from('events').select('*').eq('organizer_id', user.id).order('created_at', { ascending: false });
+      setEventsData(events || []);
       const eventIds = events?.map((e) => e.id) || [];
       if (!eventIds.length) {
         setStats({ events: 0, matches: 0, messages: 0, sponsors: 0 });
@@ -83,6 +88,44 @@ const OrganizerDashboard = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold">Recent Events</h2>
+          <Link to="/my-events" className="text-xs text-primary hover:underline">View All</Link>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {eventsData.slice(0, 2).map((event: any) => (
+            <Card key={event.id} className="glass-card border-border/30 hover:border-primary/20 transition-all group overflow-hidden">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold text-sm leading-tight line-clamp-1 group-hover:text-primary transition-colors">{event.name}</h3>
+                  <Badge variant="outline" className="text-[8px] uppercase px-1 py-0 bg-primary/5 text-primary border-primary/20 shrink-0">
+                    {event.category}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                   <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {event.city}</div>
+                   <div className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(event.event_date).toLocaleDateString()}</div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/10">
+                   <Button asChild variant="default" className="h-7 text-[10px] gap-1 bg-primary/90">
+                     <Link to={`/event/${event.id}/dashboard`}>Go to Studio</Link>
+                   </Button>
+                   <Button asChild variant="outline" className="h-7 text-[10px] gap-1">
+                     <Link to={`/event/${event.id}/edit`}>Edit</Link>
+                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {eventsData.length === 0 && (
+            <div className="col-span-2 py-10 text-center border border-dashed rounded-xl bg-muted/5">
+              <p className="text-xs text-muted-foreground italic">No events found. Create one to get started!</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

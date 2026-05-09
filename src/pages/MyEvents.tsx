@@ -73,87 +73,74 @@ const MyEvents = () => {
       {events.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">No events yet. Create your first event!</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-6 grid-cols-2">
           {events.map((event) => (
-            <Card key={event.id} className="glass-card border-border/30 hover:shadow-lg transition-shadow">
-              <CardContent className="p-5 space-y-3">
-                <div className="flex items-start justify-between">
-                  <h3 className="font-semibold text-lg">{event.name}</h3>
-                  <Badge className={statusColors[event.status]}>{event.status}</Badge>
+            <Card key={event.id} className="glass-card border-border/30 hover:shadow-lg transition-all h-full flex flex-col">
+              <CardContent className="p-3 sm:p-5 flex-1 flex flex-col space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold text-sm sm:text-lg leading-tight line-clamp-1">{event.name}</h3>
+                  <Badge className={`text-[8px] sm:text-xs shrink-0 ${statusColors[event.status]}`}>{event.status}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
-                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{event.city}</span>
-                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(event.event_date).toLocaleDateString()}</span>
-                  <span className="flex items-center gap-1"><Users className="h-3 w-3" />{event.audience_size}</span>
-                  <span className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />{event.budget_required.toLocaleString()}</span>
+                <p className="text-[10px] sm:text-sm text-muted-foreground line-clamp-2">{event.description}</p>
+                <div className="flex flex-col gap-1 text-[9px] sm:text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5 truncate"><MapPin className="h-3 w-3 text-primary" />{event.city}</span>
+                  <span className="flex items-center gap-1.5 truncate"><Calendar className="h-3 w-3 text-primary" />{new Date(event.event_date).toLocaleDateString()}</span>
                 </div>
-                <div className="flex gap-1 flex-wrap">
-                  <Badge variant="secondary" className="text-xs">{event.category}</Badge>
-                  {event.tags?.slice(0, 3).map((t) => (
-                    <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
-                  ))}
-                </div>
+                
+                <div className="mt-auto pt-3 border-t border-border/30">
+                  <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+                    <Button asChild variant="default" className="h-8 px-2 text-[10px] sm:text-xs gap-1 w-full sm:w-auto">
+                      <Link to={`/event/${event.id}/dashboard`}>
+                        <LayoutDashboard className="h-3 w-3" /> Dashboard
+                      </Link>
+                    </Button>
+                    
+                    <Button asChild variant="outline" className="h-8 px-2 text-[10px] sm:text-xs gap-1 w-full sm:w-auto">
+                      <Link to={`/event/${event.id}/edit`}>
+                        <Edit className="h-3 w-3" /> Edit
+                      </Link>
+                    </Button>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-2 border-t border-border/30">
-                  <Button asChild variant="default" size="sm" className="text-xs gap-1">
-                    <Link to={`/event/${event.id}/dashboard`}>
-                      <LayoutDashboard className="h-3 w-3" /> Dashboard
-                    </Link>
-                  </Button>
-                  
-                  <Button asChild variant="outline" size="sm" className="text-xs gap-1">
-                    <Link to={`/event/${event.id}/edit`}>
-                      <Edit className="h-3 w-3" /> Edit
-                    </Link>
-                  </Button>
+                    <div className="flex gap-2 w-full sm:w-auto mt-1 sm:mt-0">
+                      {event.status === 'active' && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" className="h-8 p-1 text-[10px] text-muted-foreground hover:text-destructive">
+                              <XCircle className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel event?</AlertDialogTitle>
+                              <AlertDialogDescription>Mark "{event.name}" as closed?</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep Active</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleCancel(event.id)} className="bg-destructive">Yes, Cancel</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
 
-                  {event.status === 'active' && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-xs gap-1">
-                          <XCircle className="h-3 w-3" /> Cancel Event
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Cancel this event?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will mark "{event.name}" as closed. Sponsors will no longer see it as active. This action can't be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Keep Active</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleCancel(event.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Yes, Cancel Event
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-xs gap-1 text-destructive hover:text-destructive">
-                        <Trash2 className="h-3 w-3" /> Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this event permanently?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          "{event.name}" and all its matches, conversations, and messages will be permanently deleted. This cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Keep Event</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(event.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                          Yes, Delete Forever
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" className="h-8 p-1 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete permanently?</AlertDialogTitle>
+                            <AlertDialogDescription>This will delete "{event.name}" forever.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Go Back</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(event.id)} className="bg-destructive">Delete Forever</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

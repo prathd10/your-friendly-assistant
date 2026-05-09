@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Calendar, MapPin, Users, Loader2, Sparkles, Gift, CheckCircle2, Lock } from 'lucide-react';
+import { Calendar, MapPin, Users, Loader2, Sparkles, Gift, CheckCircle2, Lock, Search, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PublicEvent {
@@ -35,6 +35,7 @@ const EventsNearMe = () => {
   const [perks, setPerks] = useState<any[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPerkPreview, setShowPerkPreview] = useState<{name: string, perks: any[]} | null>(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     fetchEvents();
@@ -113,6 +114,12 @@ const EventsNearMe = () => {
     setPerks([]);
   };
 
+  const filteredEvents = events.filter(e => 
+    e.name.toLowerCase().includes(search.toLowerCase()) || 
+    e.city.toLowerCase().includes(search.toLowerCase()) ||
+    e.category.toLowerCase().includes(search.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -122,81 +129,103 @@ const EventsNearMe = () => {
   }
 
   return (
-    <section className="py-24 bg-background border-t">
-      <div className="container">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+    <section className="py-24 bg-background border-t relative overflow-hidden">
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="container relative z-10">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-6">
           <div className="space-y-4">
-            <Badge variant="outline" className="text-primary border-primary/20">Live Opportunities</Badge>
-            <h2 className="text-3xl font-bold md:text-5xl tracking-tight">Events Near You</h2>
+            <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 px-3 py-1 font-bold tracking-widest uppercase text-[10px]">
+              Live Opportunities
+            </Badge>
+            <h2 className="text-3xl font-black md:text-5xl tracking-tight uppercase italic">Events Near You</h2>
             <p className="text-muted-foreground text-lg max-w-2xl">
               Discover high-impact events happening in your area. RSVP now to attend or partner.
             </p>
           </div>
-          <Button 
-            variant="ghost" 
-            className="hidden md:flex items-center gap-2 group"
-            onClick={() => navigate('/explore-events')}
-          >
-            View All Events <Sparkles className="h-4 w-4 group-hover:text-primary transition-colors" />
-          </Button>
+          
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Filter by city or category..." 
+                className="pl-9 bg-muted/30 border-border/50 h-11"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              className="h-11 items-center gap-2 group whitespace-nowrap"
+              onClick={() => navigate('/explore-events')}
+            >
+              Explore All <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
         </div>
 
-        {events.length === 0 ? (
-          <div className="text-center py-20 border border-dashed rounded-2xl bg-muted/20">
+        {filteredEvents.length === 0 ? (
+          <div className="text-center py-20 border border-dashed rounded-3xl bg-muted/10">
             <Calendar className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold">No active events yet</h3>
-            <p className="text-muted-foreground mt-2">Check back later or publish your own event to see it here!</p>
+            <h3 className="text-xl font-bold uppercase italic">No matches found</h3>
+            <p className="text-muted-foreground mt-2">Try a different search or check back later!</p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <Card key={event.id} className="glass-card flex flex-col border-border/30 hover:shadow-xl transition-all duration-300 group">
-                <CardHeader className="space-y-2">
-                  <div className="flex justify-between items-start">
-                    <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10">
+          <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredEvents.map((event, idx) => (
+              <Card 
+                key={event.id} 
+                className="glass-card flex flex-col border-border/30 hover:border-primary/30 hover:shadow-2xl transition-all duration-500 group animate-in fade-in slide-in-from-bottom-4 h-full"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <CardHeader className="space-y-2 p-3 sm:p-5 pb-2">
+                  <div className="flex justify-between items-start gap-1">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[8px] sm:text-[10px] font-black uppercase px-1.5 py-0">
                       {event.category}
                     </Badge>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                      <Users className="h-3 w-3" /> {event.expected_footfall.toLocaleString()} +
+                    <span className="text-[8px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1 shrink-0">
+                      <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {event.expected_footfall.toLocaleString()}
                     </span>
                   </div>
-                  <CardTitle className="text-xl group-hover:text-primary transition-colors">{event.name}</CardTitle>
-                  <CardDescription className="line-clamp-2 min-h-[40px]">
-                    {event.description}
-                  </CardDescription>
+                  <CardTitle className="text-sm sm:text-xl font-bold group-hover:text-primary transition-colors leading-tight line-clamp-1">
+                    {event.name}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 mt-auto">
-                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-primary" />
-                      {new Date(event.event_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                <CardContent className="space-y-3 sm:space-y-6 p-3 sm:p-5 pt-0 mt-auto">
+                  <div className="flex flex-col gap-1.5 text-[10px] sm:text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-primary/5 flex items-center justify-center shrink-0">
+                        <Calendar className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-primary" />
+                      </div>
+                      <span className="font-medium truncate">{new Date(event.event_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      {event.city}
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-primary/5 flex items-center justify-center shrink-0">
+                        <MapPin className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-primary" />
+                      </div>
+                      <span className="font-medium truncate">{event.city}</span>
                     </div>
                   </div>
                   
                   {event.perks && event.perks.length > 0 && (
                     <div 
-                      className="flex items-center gap-2 p-2 rounded-lg bg-secondary/5 border border-secondary/20 animate-pulse cursor-help hover:bg-secondary/10 transition-colors"
+                      className="flex items-center gap-2 p-2 rounded-xl bg-secondary/10 border border-secondary/20 cursor-help hover:bg-secondary/20 transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowPerkPreview({ name: event.name, perks: event.perks || [] });
                       }}
                     >
-                      <Gift className="h-4 w-4 text-secondary" />
-                      <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
-                        {event.perks.length} {event.perks.length === 1 ? 'Sponsor Perk' : 'Sponsor Perks'} Included
+                      <Gift className="h-4 w-4 text-secondary animate-bounce" />
+                      <span className="text-[9px] font-black text-secondary uppercase tracking-tighter">
+                        {event.perks.length} Perks Unlocked
                       </span>
                     </div>
                   )}
 
                   <Button 
                     onClick={() => setSelectedEvent(event)}
-                    className="w-full bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border-primary/20 transition-all font-semibold"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/10 transition-all font-bold uppercase tracking-widest text-[10px] h-10"
                   >
-                    RSVP for Event
+                    RSVP Now
                   </Button>
                 </CardContent>
               </Card>

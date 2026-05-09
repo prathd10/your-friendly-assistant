@@ -466,7 +466,7 @@ const Matches = () => {
           {sponsorMatches.length === 0 ? (
             <p className="text-muted-foreground text-center py-16">No sponsor matches yet. Publish an event to get matched.</p>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {sponsorMatches.map(m => {
                 const key = `${m.event_id}_${m.sponsor_id}`;
                 const alreadySent = sentRequests.has(key);

@@ -158,25 +158,23 @@ const BrowseEvents = () => {
       {filtered.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">No events found matching your criteria.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3">
           {filtered.map((event) => (
             <Card
               key={event.id}
               className="glass-card border-border/30 hover:shadow-lg transition-all hover:-translate-y-0.5 cursor-pointer"
               onClick={() => setSelectedEvent(event)}
             >
-              <CardContent className="p-5 space-y-3">
-                <h3 className="font-semibold text-lg">{event.name}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
-                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{event.city}</span>
-                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(event.event_date).toLocaleDateString()}</span>
-                  <span className="flex items-center gap-1"><Users className="h-3 w-3" />{event.audience_size}</span>
-                  <span className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />₹{event.budget_required.toLocaleString()}</span>
+              <CardContent className="p-3 sm:p-5 space-y-2 sm:space-y-3">
+                <h3 className="font-bold text-xs sm:text-lg leading-tight line-clamp-1">{event.name}</h3>
+                <p className="text-[10px] sm:text-sm text-muted-foreground line-clamp-2">{event.description}</p>
+                <div className="flex flex-col gap-1 text-[9px] sm:text-xs text-muted-foreground pt-1 sm:pt-0">
+                  <span className="flex items-center gap-1.5 truncate"><MapPin className="h-3 w-3 text-primary" />{event.city}</span>
+                  <span className="flex items-center gap-1.5 truncate"><Calendar className="h-3 w-3 text-primary" />{new Date(event.event_date).toLocaleDateString()}</span>
+                  <span className="flex items-center gap-1.5 truncate"><IndianRupee className="h-3 w-3 text-primary" />₹{event.budget_required.toLocaleString()}</span>
                 </div>
-                <div className="flex gap-1 flex-wrap">
-                  <Badge variant="secondary">{event.category}</Badge>
-                  {event.tags?.slice(0, 3).map((t) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
+                <div className="flex gap-1 flex-wrap pt-1 sm:pt-0">
+                  <Badge variant="secondary" className="text-[8px] sm:text-xs px-1 py-0">{event.category}</Badge>
                 </div>
               </CardContent>
             </Card>

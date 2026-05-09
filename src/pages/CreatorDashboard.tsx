@@ -5,10 +5,10 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LayoutDashboard, Users, Heart, Shield, CheckCircle, Clock, XCircle, AlertTriangle, Upload, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { uploadToImageKit, deleteFromImageKit } from '@/lib/imagekit';
+import { LayoutDashboard, Users, Heart, Shield, CheckCircle, Clock, XCircle, AlertTriangle, Upload, Trash2, MapPin, IndianRupee, Calendar, Send, Briefcase } from 'lucide-react';
 
 // --- Trust Score Calculation (0-100) ---
 function calculateTrustScore(profile: any): number {
@@ -55,6 +55,7 @@ const CreatorDashboard = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stats, setStats] = useState({ activeCampaigns: 0, pendingRequests: 0 });
   const [uploading, setUploading] = useState(false);
+  const [featuredGigs, setFeaturedGigs] = useState<any[]>([]);
 
   useEffect(() => {
     if (!profile) return;
@@ -72,6 +73,9 @@ const CreatorDashboard = () => {
       }
     };
     fetchStats();
+
+    supabase.from('events').select('id, name, city, event_date, budget_required, category').eq('status', 'active').order('created_at', { ascending: false }).limit(2)
+      .then(({ data }) => setFeaturedGigs(data || []));
   }, [profile]);
 
   const handleProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,6 +149,36 @@ const CreatorDashboard = () => {
       <div>
         <h1 className="text-2xl font-bold">Creator Dashboard</h1>
         <p className="text-muted-foreground">Welcome back, {profile.full_name}!</p>
+      </div>
+
+      {/* Featured Gigs */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary" /> Featured Gigs</h2>
+          <Link to="/browse-gigs" className="text-xs text-primary hover:underline">View All Gigs</Link>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {featuredGigs.map((gig) => (
+            <Card key={gig.id} className="glass-card border-border/30 hover:border-primary/20 transition-all group overflow-hidden flex flex-col">
+              <CardContent className="p-3 space-y-2 flex-1 flex flex-col">
+                <h3 className="font-bold text-[11px] sm:text-sm leading-tight line-clamp-1 group-hover:text-primary transition-colors">{gig.name}</h3>
+                <div className="flex flex-col gap-1 text-[9px] text-muted-foreground">
+                  <div className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 text-primary shrink-0" /> {gig.city}</div>
+                  <div className="flex items-center gap-1 truncate"><Calendar className="h-3 w-3 text-primary shrink-0" /> {new Date(gig.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                  <div className="flex items-center gap-1 font-semibold text-foreground"><IndianRupee className="h-3 w-3 text-primary shrink-0" /> ₹{gig.budget_required?.toLocaleString()}</div>
+                </div>
+                <Button asChild variant="default" className="w-full h-7 text-[10px] mt-auto bg-primary/90">
+                  <Link to="/browse-gigs"><Send className="h-3 w-3 mr-1" /> Pitch</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+          {featuredGigs.length === 0 && (
+            <div className="col-span-2 py-8 text-center border border-dashed rounded-xl bg-muted/5">
+              <p className="text-xs text-muted-foreground italic">No active gigs right now. Check back soon!</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats Row */}

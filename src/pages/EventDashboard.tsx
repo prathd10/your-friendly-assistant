@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import AIPitchDeck from '@/components/AIPitchDeck';
 import AIVideoGenerator from '@/components/AIVideoGenerator';
-import { generateEventPitch, generateVideoScript } from '@/lib/gemini';
+import { generateEventPitch, generateVideoScript } from '@/lib/ai-service';
 
 const EventDashboard = () => {
   const { id } = useParams();
@@ -155,12 +155,28 @@ const EventDashboard = () => {
 
   const handleGeneratePitch = async () => {
     if (!event) return;
+    
+    // If we already have a deck, just show it
+    if (event.ai_pitch_deck) {
+      setAiPitchData(event.ai_pitch_deck);
+      setShowPitchModal(true);
+      return;
+    }
+
     setGeneratingPitch(true);
     try {
       const data = await generateEventPitch(event, event.past_event_media || []);
       setAiPitchData(data);
+      
+      // Auto-save to database so it's persisted across tab switches
+      await supabase
+        .from('events')
+        .update({ ai_pitch_deck: data })
+        .eq('id', id);
+        
       setShowPitchModal(true);
-      toast.success("AI Pitch Deck generated!");
+      toast.success("AI Pitch Deck generated and saved!");
+      refetch(); // Refresh local event data to reflect the new deck
     } catch (error: any) {
       toast.error(error.message || "Failed to generate pitch.");
     } finally {
@@ -182,8 +198,16 @@ const EventDashboard = () => {
     try {
       const data = await generateVideoScript(event);
       setAiVideoData(data);
+      
+      // Auto-save to database
+      await supabase
+        .from('events')
+        .update({ ai_video_script: data })
+        .eq('id', id);
+        
       setShowVideoModal(true);
-      toast.success("AI Video Script generated!");
+      toast.success("AI Video Script generated and saved!");
+      refetch();
     } catch (error: any) {
       toast.error(error.message || "Failed to generate video.");
     } finally {
@@ -390,8 +414,10 @@ const EventDashboard = () => {
                   {generatingPitch ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <FileBarChart className="h-4 w-4 text-primary" />}
                 </div>
                 <div className="text-left flex-1">
-                  <p className="text-sm">Pitch Deck Generator</p>
-                  <p className="text-[10px] text-muted-foreground font-normal">Generate 5 professional slides</p>
+                  <p className="text-sm">{event.ai_pitch_deck ? 'View Pitch Deck' : 'Pitch Deck Generator'}</p>
+                  <p className="text-[10px] text-muted-foreground font-normal">
+                    {event.ai_pitch_deck ? 'Open your generated deck' : 'Generate 10 professional slides'}
+                  </p>
                 </div>
               </Button>
 

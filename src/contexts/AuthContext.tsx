@@ -67,38 +67,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    console.log('[Auth] Setting up auth listener');
+    // 1. Check for initial session immediately
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        }
+      } catch (err) {
+        console.error('[Auth] Initial session check failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // 2. Set up listener for subsequent changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log('[Auth] State changed:', _event, !!session?.user);
-        
-        try {
+      async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
             setUser(session.user);
-            setLoading(true);
             await fetchProfile(session.user.id);
-          } else {
-            setUser(null);
-            setProfile(null);
           }
-        } finally {
-          setLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setProfile(null);
         }
+        setLoading(false);
       }
     );
-
-    // Initial session check
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('[Auth] Existing session check:', !!session?.user);
-      if (session?.user) {
-        setUser(session.user);
-        await fetchProfile(session.user.id);
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);

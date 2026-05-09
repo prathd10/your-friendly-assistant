@@ -12,6 +12,11 @@ interface Scene {
   imagePrompt: string;
 }
 
+const cleanNarratorText = (text: string) => {
+  // Regex to remove any JSON-like structures that might have leaked
+  return text.replace(/\{"gender".*?\}/g, 'our target audience').replace(/\{.*?\}/g, '');
+};
+
 interface AIVideoGeneratorProps {
   eventData: any;
   media: string[];
@@ -52,7 +57,9 @@ const AIVideoGenerator = ({ eventData, media, script, eventId }: AIVideoGenerato
       return;
     }
     setCurrentScene(index);
-    const text = script.scenes[index]?.narratorText;
+    const rawText = script.scenes[index]?.narratorText;
+    const text = cleanNarratorText(rawText || '');
+    
     if (!text || muted) {
       setTimeout(() => playScene(index + 1), 4000);
       return;
@@ -179,28 +186,35 @@ const AIVideoGenerator = ({ eventData, media, script, eventId }: AIVideoGenerato
     ctx.fill();
 
     // Subtitle text (word-wrap)
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.font = '400 19px Inter, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.font = '500 20px Inter, Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.shadowBlur = 0;
-    const words = scene.narratorText.split(' ');
+    const cleanText = cleanNarratorText(scene.narratorText);
+    const words = cleanText.split(' ');
     let line = '';
     const lines: string[] = [];
     for (const word of words) {
       const test = line + word + ' ';
-      if (ctx.measureText(test).width > W - 200) { lines.push(line.trim()); line = word + ' '; }
+      if (ctx.measureText(test).width > W - 240) { lines.push(line.trim()); line = word + ' '; }
       else line = test;
     }
     if (line.trim()) lines.push(line.trim());
-    const lineH = 26;
+    const lineH = 28;
     const startY = H - 140 + (110 - lines.length * lineH) / 2 + lineH;
     lines.forEach((l, i) => ctx.fillText(l, W / 2, startY + i * lineH));
 
-    // Progress bar
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.fillRect(0, H - 3, W, 3);
-    ctx.fillStyle = '#7c3aed';
-    ctx.fillRect(0, H - 3, W * ((sceneIndex + progress) / totalScenes), 3);
+    // Progress bar - Premium style
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(40, H - 20, W - 80, 4);
+    const progressWidth = (W - 80) * ((sceneIndex + progress) / totalScenes);
+    const grad = ctx.createLinearGradient(40, 0, 40 + progressWidth, 0);
+    grad.addColorStop(0, '#7c3aed');
+    grad.addColorStop(1, '#a855f7');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(40, H - 20, progressWidth, 4, 2);
+    ctx.fill();
   };
 
   const downloadVideo = async () => {
@@ -381,27 +395,36 @@ const AIVideoGenerator = ({ eventData, media, script, eventId }: AIVideoGenerato
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.7)_100%)]" />
-              <div className="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/80 to-transparent" />
-              <div className="absolute inset-0 flex flex-col justify-center items-center px-12 text-center z-10">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }} className="space-y-3">
-                  <p className="text-[10px] uppercase tracking-widest text-white/40 font-medium">{currentScene + 1} / {script.scenes.length}</p>
-                  <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none drop-shadow-lg uppercase">{scene.overlay}</h2>
-                  <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="h-0.5 w-24 bg-primary mx-auto origin-left" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.15)_0%,transparent_70%)]" />
+              <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              
+              <div className="absolute inset-0 flex flex-col justify-center items-center px-16 text-center z-10">
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.8 }} className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-md mb-2">
+                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{currentScene + 1} / {script.scenes.length}</span>
+                  </div>
+                  <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.85] drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] uppercase italic">
+                    {scene.overlay}
+                  </h2>
+                  <motion.div initial={{ width: 0 }} animate={{ width: 120 }} transition={{ delay: 0.8, duration: 1 }} className="h-1 bg-gradient-to-r from-primary to-purple-400 mx-auto rounded-full" />
                 </motion.div>
               </div>
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.5 }}
-                className="absolute bottom-8 left-8 right-8 z-10">
-                <div className="bg-black/50 backdrop-blur-sm rounded-lg px-5 py-3 border border-white/10">
-                  <p className="text-sm md:text-base text-white/90 leading-relaxed text-center">{scene.narratorText}</p>
+
+              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: 0.7 }}
+                className="absolute bottom-12 left-12 right-12 z-10">
+                <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+                  <p className="text-lg md:text-xl text-white/90 font-medium leading-relaxed text-center tracking-tight">
+                    {cleanNarratorText(scene.narratorText)}
+                  </p>
                 </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10 z-30">
-          <motion.div className="h-full bg-primary"
+        {/* HUD Progress Bar */}
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/5 z-30">
+          <motion.div className="h-full bg-gradient-to-r from-primary to-purple-500 shadow-[0_0_15px_rgba(124,58,237,0.5)]"
             animate={{ width: `${((currentScene + (isPlaying ? 1 : 0)) / script.scenes.length) * 100}%` }}
             transition={{ duration: 0.4 }} />
         </div>

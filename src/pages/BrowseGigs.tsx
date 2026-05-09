@@ -169,26 +169,22 @@ const BrowseGigs = () => {
           {filteredEvents.length === 0 ? (
             <p className="text-muted-foreground text-center py-10">No active events found.</p>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3">
               {filteredEvents.map(ev => (
-                <Card key={ev.id} className="glass-card border-border/30 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                  <CardContent className="p-5 space-y-3">
+                <Card key={ev.id} className="glass-card border-border/30 hover:shadow-lg hover:-translate-y-0.5 transition-all flex flex-col">
+                  <CardContent className="p-3 sm:p-5 space-y-2 flex-1 flex flex-col">
                     <div>
-                      <h3 className="font-semibold">{ev.name}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{ev.description}</p>
+                      <h3 className="font-bold text-xs sm:text-base leading-tight line-clamp-1">{ev.name}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 mt-1">{ev.description}</p>
                     </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(ev.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                      <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{ev.city}</span>
-                      <span className="flex items-center gap-1"><Users className="h-3 w-3" />{ev.expected_footfall?.toLocaleString()} expected</span>
-                      <span className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />₹{ev.budget_required?.toLocaleString()} budget</span>
+                    <div className="flex flex-col gap-1 text-[9px] sm:text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1 truncate"><Calendar className="h-3 w-3 text-primary shrink-0" />{new Date(ev.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                      <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 text-primary shrink-0" />{ev.city}</span>
+                      <span className="flex items-center gap-1 truncate"><IndianRupee className="h-3 w-3 text-primary shrink-0" />₹{ev.budget_required?.toLocaleString()}</span>
                     </div>
-                    <div className="flex gap-2 items-center">
-                      <Badge variant="secondary">{ev.category}</Badge>
-                      <Badge variant="outline" className="ml-auto text-xs">{ev.status}</Badge>
-                    </div>
-                    <Button className="w-full" size="sm" onClick={() => openPitch({ type: 'event', event: ev })}>
-                      <Send className="h-3.5 w-3.5 mr-2" /> Pitch for This Event
+                    <Badge variant="secondary" className="text-[8px] sm:text-xs px-1 py-0 w-fit">{ev.category}</Badge>
+                    <Button className="w-full mt-auto" size="sm" onClick={() => openPitch({ type: 'event', event: ev })}>
+                      <Send className="h-3 w-3 mr-1" /> Pitch
                     </Button>
                   </CardContent>
                 </Card>
@@ -202,25 +198,23 @@ const BrowseGigs = () => {
           {filteredSponsors.length === 0 ? (
             <p className="text-muted-foreground text-center py-10">No sponsors found.</p>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3">
               {filteredSponsors.map(sp => (
-                <Card key={sp.id} className="glass-card border-border/30 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <Building className="h-5 w-5 text-primary" />
+                <Card key={sp.id} className="glass-card border-border/30 hover:shadow-lg hover:-translate-y-0.5 transition-all flex flex-col">
+                  <CardContent className="p-3 sm:p-5 space-y-2 flex-1 flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <Building className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
-                      <div>
-                        <h3 className="font-semibold">{sp.organization_name}</h3>
-                        <p className="text-xs text-muted-foreground">{sp.full_name}</p>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-xs sm:text-base truncate">{sp.organization_name}</h3>
+                        <p className="text-[10px] text-muted-foreground truncate">{sp.full_name}</p>
                       </div>
                     </div>
-                    {sp.business_description && <p className="text-sm text-muted-foreground line-clamp-2">{sp.business_description}</p>}
-                    <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
-                      {sp.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{sp.city}</span>}
-                    </div>
-                    <Button className="w-full" size="sm" onClick={() => openPitch({ type: 'sponsor', sponsor: sp })}>
-                      <Send className="h-3.5 w-3.5 mr-2" /> Pitch to This Brand
+                    {sp.business_description && <p className="text-[10px] sm:text-sm text-muted-foreground line-clamp-2">{sp.business_description}</p>}
+                    {sp.city && <span className="flex items-center gap-1 text-[9px] sm:text-xs text-muted-foreground"><MapPin className="h-3 w-3 text-primary" />{sp.city}</span>}
+                    <Button className="w-full mt-auto" size="sm" onClick={() => openPitch({ type: 'sponsor', sponsor: sp })}>
+                      <Send className="h-3 w-3 mr-1" /> Pitch
                     </Button>
                   </CardContent>
                 </Card>

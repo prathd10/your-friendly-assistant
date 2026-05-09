@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, MessageSquare, Sparkles, TrendingUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Calendar, MessageSquare, Sparkles, TrendingUp, MapPin, Users, Building, IndianRupee, CheckCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import VirtualWallet from '@/components/VirtualWallet';
 
@@ -13,6 +16,8 @@ const SponsorDashboard = () => {
   const [stats, setStats] = useState({ matched: 0, conversations: 0, messages: 0 });
   const [categoryData, setCategoryData] = useState<{ name: string; value: number }[]>([]);
   const [budgetData, setBudgetData] = useState<{ name: string; budget: number }[]>([]);
+  const [recentEvents, setRecentEvents] = useState<any[]>([]);
+  const [topCreators, setTopCreators] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -42,6 +47,14 @@ const SponsorDashboard = () => {
       });
       setCategoryData(Object.entries(cats).map(([name, value]) => ({ name, value })));
       setBudgetData(budgets.slice(0, 8));
+
+      // Featured Events
+      const { data: fe } = await supabase.from('events').select('*').eq('status', 'active').order('created_at', { ascending: false }).limit(2);
+      setRecentEvents(fe || []);
+
+      // Trending Creators
+      const { data: tc } = await supabase.from('users').select('*').eq('role', 'creator').order('created_at', { ascending: false }).limit(2);
+      setTopCreators(tc || []);
     };
     load();
   }, [user]);
@@ -64,20 +77,61 @@ const SponsorDashboard = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {statCards.map((s) => (
-          <Card key={s.label} className="glass-card border-border/30">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <s.icon className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Recent Events Grid */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-lg font-bold flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" /> Featured Events</h2>
+            <Link to="/browse-events" className="text-xs text-primary hover:underline">View All</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {recentEvents.map((event) => (
+              <Card key={event.id} className="glass-card border-border/30 hover:border-primary/20 transition-all group overflow-hidden">
+                <CardContent className="p-3 space-y-2">
+                  <h3 className="font-bold text-[11px] sm:text-sm leading-tight line-clamp-1 group-hover:text-primary transition-colors">{event.name}</h3>
+                  <div className="flex flex-col gap-1 text-[9px] text-muted-foreground">
+                    <div className="flex items-center gap-1"><MapPin className="h-3 w-3 text-primary" /> {event.city}</div>
+                    <div className="flex items-center gap-1 font-semibold text-foreground"><IndianRupee className="h-3 w-3 text-primary" /> ₹{event.budget_required.toLocaleString()}</div>
+                  </div>
+                  <Button asChild variant="default" className="w-full h-7 text-[10px] mt-1 bg-primary/90">
+                    <Link to="/browse-events">Details</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Creators Grid */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-lg font-bold flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Top Creators</h2>
+            <Link to="/browse-creators" className="text-xs text-primary hover:underline">View All</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {topCreators.map((creator) => (
+              <Card key={creator.id} className="glass-card border-border/30 hover:border-primary/20 transition-all group overflow-hidden">
+                <CardContent className="p-3 space-y-2 text-center">
+                  <div className="flex justify-center mb-1">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center relative">
+                      <Users className="h-5 w-5 text-primary" />
+                      {creator.verification_status === 'verified' && (
+                        <CheckCircle className="absolute -top-1 -right-1 h-4 w-4 text-green-500 fill-background" />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[11px] sm:text-sm leading-tight line-clamp-1">{creator.full_name}</h3>
+                    <p className="text-[9px] text-muted-foreground">{creator.platform || 'Creator'}</p>
+                  </div>
+                  <Button asChild variant="outline" className="w-full h-7 text-[10px] mt-1">
+                    <Link to="/browse-creators">View Profile</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

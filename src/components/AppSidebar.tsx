@@ -69,7 +69,7 @@ const NOTIF_KEYS: Record<string, 'messages' | 'requests' | 'matches'> = {
 export function AppSidebar() {
   const { profile, signOut } = useAuth();
   const { counts, clearCount } = useNotifications();
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed';
   const items = profile?.role === 'organizer'
     ? organizerItems
@@ -88,6 +88,7 @@ export function AppSidebar() {
   const handleNav = (url: string) => {
     const key = NOTIF_KEYS[url];
     if (key) clearCount(key);
+    setOpenMobile(false);
   };
 
   const getBadge = (url: string): number => {

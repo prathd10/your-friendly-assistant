@@ -13,11 +13,32 @@ export interface DiscoveryCriteria {
 
 export const findSuggestedPartners = async (criteria: DiscoveryCriteria): Promise<UserProfile[]> => {
   try {
+    // 0. Keyword Affinity Safety Check
+    // If the AI was too broad, but keywords are very specific, narrow the roles manually.
+    const lowerKeywords = criteria.keywords.map(k => k.toLowerCase());
+    const performerKeywords = ['singer', 'artist', 'band', 'dj', 'musician', 'performer', 'dancer', 'comedian'];
+    const sponsorKeywords = ['brand', 'sponsor', 'funding', 'money', 'investment', 'partner'];
+    const vendorKeywords = ['venue', 'lights', 'sound', 'catering', 'food', 'security', 'stage', 'led'];
+
+    let effectiveRoles = [...criteria.rolesNeeded];
+    
+    // If we have very strong affinity for one role, and multiple roles were suggested
+    if (effectiveRoles.length > 1) {
+      const hasPerformerKeyword = lowerKeywords.some(k => performerKeywords.includes(k));
+      const hasSponsorKeyword = lowerKeywords.some(k => sponsorKeywords.includes(k));
+      const hasVendorKeyword = lowerKeywords.some(k => vendorKeywords.includes(k));
+
+      // If ONLY one type of keyword was found, force that role
+      if (hasPerformerKeyword && !hasSponsorKeyword && !hasVendorKeyword) effectiveRoles = ['performer'];
+      else if (hasSponsorKeyword && !hasPerformerKeyword && !hasVendorKeyword) effectiveRoles = ['sponsor'];
+      else if (hasVendorKeyword && !hasPerformerKeyword && !hasSponsorKeyword) effectiveRoles = ['vendor'];
+    }
+
     // 1. Base query for requested roles
     let query = supabase
       .from('users')
       .select('*')
-      .in('role', criteria.rolesNeeded);
+      .in('role', effectiveRoles);
 
     // 2. City Filter (Primary)
     if (criteria.city) {
@@ -80,8 +101,8 @@ export const findSuggestedPartners = async (criteria: DiscoveryCriteria): Promis
       return { ...profile, match_score: score, match_reasons: reasons };
     });
 
-    // 5. Group by role to ensure diversity
-    const grouped: Record<string, UserProfile[]> = {};
+    // 5. Group by role for diversity checks
+    const grouped: Record<string, any[]> = {};
     scoredResults.forEach(p => {
       if (p.match_score && p.match_score > 0) {
         if (!grouped[p.role]) grouped[p.role] = [];
@@ -94,7 +115,16 @@ export const findSuggestedPartners = async (criteria: DiscoveryCriteria): Promis
       grouped[role].sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
     });
 
-    // Interleave results to show a mix of all verticals
+    // 6. Final Selection Strategy
+    // If specific roles are requested (1 or 2), show best matches globally
+    if (criteria.rolesNeeded.length <= 2) {
+      return scoredResults
+        .filter(p => (p.match_score || 0) > 10)
+        .sort((a, b) => (b.match_score || 0) - (a.match_score || 0))
+        .slice(0, 10);
+    }
+
+    // Otherwise, interleave results to ensure diversity in broad searches
     const finalResults: UserProfile[] = [];
     const roles = Object.keys(grouped);
     let hasMore = true;
@@ -103,7 +133,7 @@ export const findSuggestedPartners = async (criteria: DiscoveryCriteria): Promis
     while (finalResults.length < 10 && hasMore) {
       hasMore = false;
       roles.forEach(role => {
-        if (grouped[role][index] && finalResults.length < 10) {
+        if (grouped[role] && grouped[role][index] && finalResults.length < 10) {
           finalResults.push(grouped[role][index]);
           hasMore = true;
         }

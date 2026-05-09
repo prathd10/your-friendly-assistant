@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { analyzeDiscoveryIntentNew } from '@/lib/gemini';
+import { analyzeDiscoveryIntentNew } from '@/lib/ai-service';
 import { findSuggestedPartners, DiscoveryCriteria } from '@/lib/ai-discovery';
 import { UserProfile } from '@/types/database';
 import { useNavigate } from 'react-router-dom';
@@ -262,6 +262,11 @@ const AIAssistant = () => {
                   </div>
                   <p className="text-sm italic text-muted-foreground font-medium">"{criteria.eventSummary}"</p>
                   <div className="flex flex-wrap gap-2 pt-1">
+                    {criteria.rolesNeeded && criteria.rolesNeeded.map(role => (
+                      <Badge key={role} variant="default" className="bg-primary/20 text-primary border-primary/20 capitalize">
+                        {role}s
+                      </Badge>
+                    ))}
                     {criteria.city && <Badge variant="secondary" className="gap-1 font-normal"><MapPin className="h-3 w-3" /> {criteria.city}</Badge>}
                     {criteria.category && <Badge variant="secondary" className="gap-1 font-normal"><Tag className="h-3 w-3" /> {criteria.category}</Badge>}
                     {criteria.date && <Badge variant="secondary" className="gap-1 font-normal"><CalendarIcon className="h-3 w-3" /> {criteria.date}</Badge>}
@@ -422,7 +427,7 @@ const AIAssistant = () => {
               </div>
             </div>
             <p className="text-[10px] text-center text-muted-foreground uppercase tracking-widest font-medium opacity-50">
-              AI Consultations are powered by Gemini 1.5 Flash
+              AI Consultations are powered by OpenAI GPT-4o
             </p>
           </div>
         </SheetContent>

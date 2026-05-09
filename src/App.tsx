@@ -32,6 +32,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import EventDashboard from "./pages/EventDashboard";
 import PublicEvents from "./pages/PublicEvents";
+import PublicProfile from "./pages/PublicProfile";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/matches" element={<Matches />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/organizer/:id" element={<OrganizerProfile />} />
+              <Route path="/profile/:id" element={<PublicProfile />} />
               <Route path="/creator-dashboard" element={<CreatorDashboard />} />
               <Route path="/provider-dashboard" element={<ProviderDashboard />} />
               <Route path="/edit-creator-profile" element={<EditCreatorProfile />} />

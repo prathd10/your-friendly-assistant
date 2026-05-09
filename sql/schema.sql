@@ -6,10 +6,16 @@
 -- 1. Users (extended profile table)
 CREATE TABLE public.users (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  role TEXT NOT NULL CHECK (role IN ('organizer', 'sponsor')),
+  role TEXT NOT NULL CHECK (role IN ('organizer', 'sponsor', 'creator', 'admin', 'performer', 'vendor')),
   full_name TEXT NOT NULL,
+  email TEXT,
   organization_name TEXT NOT NULL,
   city TEXT NOT NULL DEFAULT '',
+  phone TEXT,
+  website_url TEXT,
+  verification_status TEXT DEFAULT 'unverified' CHECK (verification_status IN ('unverified', 'pending_review', 'verified', 'rejected', 'flagged')),
+  verification_proof_urls TEXT[] DEFAULT ARRAY[]::TEXT[],
+  verification_feedback TEXT,
   latitude DOUBLE PRECISION,
   longitude DOUBLE PRECISION,
   preferences JSONB DEFAULT '{}',
@@ -166,13 +172,17 @@ CREATE POLICY "Users can send messages" ON public.messages
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, role, full_name, organization_name, city)
+  INSERT INTO public.users (id, email, role, full_name, organization_name, city, phone, website_url, verification_status)
   VALUES (
     NEW.id,
+    NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'role', 'organizer'),
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'organization_name', ''),
-    COALESCE(NEW.raw_user_meta_data->>'city', '')
+    COALESCE(NEW.raw_user_meta_data->>'city', ''),
+    COALESCE(NEW.raw_user_meta_data->>'phone', ''),
+    COALESCE(NEW.raw_user_meta_data->>'website_url', ''),
+    'unverified'
   );
   RETURN NEW;
 END;

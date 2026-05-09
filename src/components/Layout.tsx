@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import AIAssistant from '@/components/AIAssistant';
 
 const Layout = () => {
   const { profile } = useAuth();
@@ -16,9 +17,17 @@ const Layout = () => {
             <div className="flex-1" />
             {profile && (
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium text-primary">
-                  {profile.full_name?.charAt(0)?.toUpperCase()}
-                </div>
+                {profile.profile_photo ? (
+                  <img 
+                    src={profile.profile_photo} 
+                    alt={profile.full_name} 
+                    className="h-8 w-8 rounded-full object-cover border border-border"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium text-primary">
+                    {profile.full_name?.charAt(0)?.toUpperCase()}
+                  </div>
+                )}
                 <span className="text-sm font-medium hidden sm:inline">{profile.full_name}</span>
               </div>
             )}
@@ -26,6 +35,7 @@ const Layout = () => {
           <main className="flex-1 p-4 md:p-6 overflow-auto">
             <Outlet />
           </main>
+          {profile?.role === 'organizer' && <AIAssistant />}
         </div>
       </div>
     </SidebarProvider>

@@ -25,12 +25,70 @@ const organizers = [
   { email: 'malhar@xaviers.demo', full_name: 'Aarav Deshmukh', organization_name: "Xavier's Malhar", city: 'Mumbai', latitude: 18.9432, longitude: 72.8310 },
 ];
 
+const admin = { email: 'admin@eventsphere.demo', full_name: 'Super Admin', organization_name: 'EventSphere HQ', city: 'Mumbai' };
+
 const sponsors = [
   { email: 'sponsor@redbull.demo', full_name: 'Vikram Singh', organization_name: 'RedBull India', city: 'Mumbai', latitude: 19.0760, longitude: 72.8777, preferences: { categories: ['Sports', 'College Fest', 'Music'], max_budget: 400000, cities: ['Mumbai', 'Pune'], min_audience: 500 } },
   { email: 'sponsor@boatlifestyle.demo', full_name: 'Neha Gupta', organization_name: 'Boat Lifestyle', city: 'Mumbai', latitude: 19.1136, longitude: 72.8697, preferences: { categories: ['Music', 'College Fest', 'Tech'], max_budget: 250000, cities: ['Mumbai', 'Bangalore'], min_audience: 800 } },
   { email: 'sponsor@zomato.demo', full_name: 'Karan Joshi', organization_name: 'Zomato', city: 'Mumbai', latitude: 19.0896, longitude: 72.8656, preferences: { categories: ['Cultural', 'Music', 'Food', 'College Fest'], max_budget: 300000, cities: ['Mumbai', 'Delhi', 'Pune'], min_audience: 300 } },
   { email: 'sponsor@tcs.demo', full_name: 'Ananya Rao', organization_name: 'TCS', city: 'Mumbai', latitude: 19.0665, longitude: 72.8679, preferences: { categories: ['Tech', 'Startup', 'Corporate'], max_budget: 1000000, cities: ['Mumbai', 'Bangalore', 'Hyderabad'], min_audience: 1000 } },
-  { email: 'sponsor@slicepay.demo', full_name: 'Rahul Nair', organization_name: 'Slice', city: 'Mumbai', latitude: 19.0540, longitude: 72.8400, preferences: { categories: ['College Fest', 'Tech', 'Startup'], max_budget: 200000, cities: ['Mumbai', 'Pune'], min_audience: 400 } },
+  { email: 'sponsor@oneplus.demo', full_name: 'Aryan Verma', organization_name: 'OnePlus India', city: 'Bangalore', latitude: 12.9716, longitude: 77.5946, preferences: { categories: ['Tech', 'Gaming', 'Music'], max_budget: 600000, cities: ['Bangalore', 'Delhi', 'Mumbai'], min_audience: 1200 } },
+  { email: 'sponsor@myntra.demo', full_name: 'Ishita Shah', organization_name: 'Myntra', city: 'Bangalore', latitude: 12.9716, longitude: 77.5946, preferences: { categories: ['Fashion', 'Lifestyle', 'Cultural'], max_budget: 450000, cities: ['Bangalore', 'Mumbai', 'Delhi'], min_audience: 1000 } },
+  { email: 'sponsor@coca-cola.demo', full_name: 'Rajiv Khanna', organization_name: 'Coca-Cola India', city: 'Delhi', latitude: 28.6139, longitude: 77.2090, preferences: { categories: ['Food', 'Sports', 'Music', 'Cultural'], max_budget: 800000, cities: ['Delhi', 'Mumbai', 'Bangalore', 'Pune'], min_audience: 2000 } },
+];
+
+const creators = [
+  { 
+    email: 'tech.tanya@demo.com', 
+    full_name: 'Tanya Singh', 
+    organization_name: 'Tech With Tanya', 
+    city: 'Mumbai', 
+    niche: 'Tech, Unboxing, Gadgets', 
+    business_description: 'Top tech influencer in India. Specialist in unboxing, gadgets reviews and tech event coverage.',
+    verification_status: 'pending_review',
+    platform: 'YouTube',
+    followers_count: 500000,
+    engagement_rate: 4.5,
+    average_views: 120000,
+    pricing_per_post: 25000,
+    verification_proof_urls: ['https://images.unsplash.com/photo-1460925895917-afdab827c52f']
+  },
+  { email: 'style.sahil@demo.com', full_name: 'Sahil Kapoor', organization_name: 'Style By Sahil', city: 'Mumbai', niche: 'Fashion, Lifestyle', business_description: 'Fashion and lifestyle creator. Helping brands reach Gen Z through aesthetic content.' },
+  { email: 'gamer.pro@demo.com', full_name: 'Rohan Sharma', organization_name: 'Elite Esports', city: 'Mumbai', niche: 'Gaming, Sports', business_description: 'Pro gamer and esports commentator. Reaches millions of gaming enthusiasts across India.' },
+  { email: 'foodie.ankita@demo.com', full_name: 'Ankita Das', organization_name: 'Taste of India', city: 'Delhi', niche: 'Food, Travel', business_description: 'Culinary explorer and travel vlogger. Bringing authentic Indian flavors to the global audience.' },
+  { 
+    email: 'fitness.rahul@demo.com', 
+    full_name: 'Rahul Fit', 
+    organization_name: 'FitLife India', 
+    city: 'Bangalore', 
+    niche: 'Health, Fitness, Sports', 
+    business_description: 'Certified trainer and fitness motivator. Helping India get fit one day at a time.',
+    verification_status: 'pending_review',
+    platform: 'Instagram',
+    followers_count: 150000,
+    engagement_rate: 6.2,
+    average_views: 45000,
+    pricing_per_post: 15000,
+    verification_proof_urls: ['https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b']
+  },
+];
+
+const performers = [
+  { email: 'midnight.jazz@demo.com', full_name: 'Leo & The Band', organization_name: 'The Midnight Jazz Trio', city: 'Mumbai', business_description: 'Sophisticated live jazz performances for corporate dinners, cocktail parties, and social fests.' },
+  { email: 'bolly.beats@demo.com', full_name: 'Raj & Simran', organization_name: 'BollyBeats Dance Troupe', city: 'Mumbai', business_description: 'High-energy Bollywood dance performances for large-scale college festivals and celebrity weddings.' },
+  { email: 'standup.sid@demo.com', full_name: 'Siddharth V', organization_name: 'Siddharth Standup', city: 'Mumbai', business_description: 'Relatable observational comedy and clean humor. Perfect for corporate and university gigs.' },
+  { email: 'sufi.soul@demo.com', full_name: 'Zoya Khan', organization_name: 'Sufi Soul Ensemble', city: 'Delhi', business_description: 'Soulful Sufi and fusion music. Captivating audiences with mystical melodies and modern rhythms.' },
+  { email: 'dj.electron@demo.com', full_name: 'DJ Electron', organization_name: 'EDM India', city: 'Bangalore', business_description: 'Award-winning EDM producer and DJ. Headlining major festivals and clubs across the country.' },
+  { email: 'rock.rebel@demo.com', full_name: 'The Rebels', organization_name: 'Rock Rebel Band', city: 'Pune', business_description: 'High-octane Indian rock band. Known for explosive live shows and chart-topping originals.' },
+];
+
+const vendors = [
+  { email: 'royal.cater@demo.com', full_name: 'Chef Amit', organization_name: 'Royal Gourmet Catering', city: 'Mumbai', business_description: 'Exquisite multi-cuisine catering services. Specialist in high-end hospitality and large-scale buffet setups.' },
+  { email: 'stage.pro@demo.com', full_name: 'Vijay Lights', organization_name: 'StageMaster Solutions', city: 'Mumbai', business_description: 'Comprehensive sound, lighting, and stage production. We build the base for legendary concerts and events.' },
+  { email: 'pixel.perfect@demo.com', full_name: 'Anushka Rao', organization_name: 'Pixel Perfect Media', city: 'Mumbai', business_description: 'Professional event photography and cinematic aftermovies. Capturing the soul of your event in 4K.' },
+  { email: 'delhi.decor@demo.com', full_name: 'Suresh Decor', organization_name: 'Delhi Event Decors', city: 'Delhi', business_description: 'Grand wedding and corporate event decorations. From traditional themes to modern floral art.' },
+  { email: 'bangalore.av@demo.com', full_name: 'AV Systems', organization_name: 'Bangalore Sound & Vision', city: 'Bangalore', business_description: 'State-of-the-art audiovisual solutions for tech conferences and large-scale summits.' },
+  { email: 'pune.photo@demo.com', full_name: 'Rahul Ph', organization_name: 'Pune Photo Studio', city: 'Pune', business_description: 'Specialist in candid photography and drone videography for outdoor festivals.' },
 ];
 
 const events = [
@@ -82,150 +140,42 @@ async function createUser(
 }
 
 export async function seedDemoData(onProgress: (msg: string) => void) {
-  onProgress('Creating organizer accounts...');
-
-  // Sign out current user first
+  onProgress('Starting focused seeding...');
   await withTimeout(supabase.auth.signOut(), 'sign out current session');
-
-  const organizerIds: string[] = [];
-  for (const org of organizers) {
-    onProgress(`Creating organizer: ${org.email}`);
-    const id = await createUser(org.email, {
-      role: 'organizer',
-      full_name: org.full_name,
-      organization_name: org.organization_name,
-      city: org.city,
+  
+  onProgress('Creating admin account...');
+  await createUser(admin.email, {
+    role: 'admin',
+    full_name: admin.full_name,
+    organization_name: admin.organization_name,
+    city: admin.city,
+  }, onProgress);
+  
+  onProgress('Creating creator accounts for verification...');
+  for (const cr of creators) {
+    onProgress(`Creating creator: ${cr.email}`);
+    const id = await createUser(cr.email, {
+      role: 'creator',
+      full_name: cr.full_name,
+      organization_name: cr.organization_name,
+      city: cr.city,
     }, onProgress);
     if (id) {
-      organizerIds.push(id);
-      // Update profile with lat/lng
-      await supabase.from('users').update({ latitude: org.latitude, longitude: org.longitude }).eq('id', id);
-    }
-    await sleep(500); // rate limit
-  }
-  onProgress(`Created ${organizerIds.length} organizers`);
-  if (organizerIds.length === 0) {
-    throw new Error('No organizer accounts were created. Check Auth settings and try again.');
-  }
-
-  onProgress('Creating sponsor accounts...');
-  const sponsorIds: string[] = [];
-  for (const sp of sponsors) {
-    onProgress(`Creating sponsor: ${sp.email}`);
-    const id = await createUser(sp.email, {
-      role: 'sponsor',
-      full_name: sp.full_name,
-      organization_name: sp.organization_name,
-      city: sp.city,
-    }, onProgress);
-    if (id) {
-      sponsorIds.push(id);
       await supabase.from('users').update({
-        latitude: sp.latitude,
-        longitude: sp.longitude,
-        preferences: sp.preferences,
+        niche: cr.niche,
+        business_description: cr.business_description,
+        verification_status: (cr as any).verification_status || 'verified',
+        platform: (cr as any).platform || 'Instagram',
+        followers_count: (cr as any).followers_count || 10000,
+        engagement_rate: (cr as any).engagement_rate || 3.0,
+        average_views: (cr as any).average_views || 5000,
+        pricing_per_post: (cr as any).pricing_per_post || 2000,
+        verification_proof_urls: (cr as any).verification_proof_urls || []
       }).eq('id', id);
     }
     await sleep(500);
   }
-  onProgress(`Created ${sponsorIds.length} sponsors`);
-  if (sponsorIds.length === 0) {
-    throw new Error('No sponsor accounts were created. Check Auth settings and try again.');
-  }
 
-  // Sign in as first organizer to create events
-  onProgress('Creating events...');
-  await supabase.auth.signInWithPassword({ email: organizers[0].email, password: DEMO_PASSWORD });
-
-  const eventIds: string[] = [];
-  for (let i = 0; i < events.length; i++) {
-    // Sign in as the corresponding organizer
-    await supabase.auth.signInWithPassword({ email: organizers[i].email, password: DEMO_PASSWORD });
-
-    const { data: ev, error } = await supabase.from('events').insert({
-      organizer_id: organizerIds[i],
-      ...events[i],
-    }).select('id').single();
-
-    if (ev) {
-      eventIds.push(ev.id);
-      onProgress(`Created event: ${events[i].name}`);
-    } else {
-      console.error('Event creation error:', error);
-    }
-    await sleep(300);
-  }
-
-  // Run matching for each event
-  onProgress('Running matching algorithm...');
-  for (const eid of eventIds) {
-    await supabase.rpc('calculate_matches', { p_event_id: eid });
-    await sleep(300);
-  }
-  onProgress('Matches calculated!');
-
-  // Create some conversations and messages
-  onProgress('Creating sample conversations...');
-  const convPairs = [
-    { eventIdx: 0, orgIdx: 0, spIdx: 3 }, // KJSCE Hackathon + TCS
-    { eventIdx: 1, orgIdx: 1, spIdx: 1 }, // Moksha Music + Boat
-    { eventIdx: 3, orgIdx: 3, spIdx: 3 }, // Technovanza + TCS
-  ];
-
-  const sampleMessages = [
-    [
-      { fromOrg: false, content: "Hi! We're interested in sponsoring the KJSCE Hackathon. What sponsorship tiers do you offer?" },
-      { fromOrg: true, content: "Thanks for reaching out! We have 3 tiers - Title Sponsor (₹2L), Gold (₹1L), and Silver (₹50K). Each comes with different branding and engagement perks." },
-      { fromOrg: false, content: "Title Sponsor sounds great. Can we get a booth for recruiting interns as well?" },
-      { fromOrg: true, content: "Absolutely! Title sponsors get a premium booth, stage time for a tech talk, and access to participant resumes. Want to schedule a call?" },
-    ],
-    [
-      { fromOrg: false, content: "Hey! Boat would love to be part of Moksha Music Night. We could set up an experience zone with our latest products." },
-      { fromOrg: true, content: "That would be amazing! Our footfall last year was 2500+. Would you also be interested in sponsoring the DJ night?" },
-      { fromOrg: false, content: "Yes! We can provide audio equipment too. Let's discuss the details." },
-    ],
-    [
-      { fromOrg: false, content: "We'd like to sponsor the pitch competition at Technovanza. TCS has a startup acceleration program we'd like to promote." },
-      { fromOrg: true, content: "Perfect fit! The pitch comp gets 200+ applications. We can integrate TCS branding into the judging panel and winner prizes." },
-    ],
-  ];
-
-  for (let i = 0; i < convPairs.length; i++) {
-    const pair = convPairs[i];
-    if (!eventIds[pair.eventIdx] || !organizerIds[pair.orgIdx] || !sponsorIds[pair.spIdx]) continue;
-
-    // Sign in as organizer to create conversation
-    await supabase.auth.signInWithPassword({ email: organizers[pair.orgIdx].email, password: DEMO_PASSWORD });
-
-    const { data: conv } = await supabase.from('conversations').insert({
-      event_id: eventIds[pair.eventIdx],
-      organizer_id: organizerIds[pair.orgIdx],
-      sponsor_id: sponsorIds[pair.spIdx],
-    }).select('id').single();
-
-    if (conv) {
-      // Insert messages alternating sender
-      for (const msg of sampleMessages[i]) {
-        const senderId = msg.fromOrg ? organizerIds[pair.orgIdx] : sponsorIds[pair.spIdx];
-        const receiverId = msg.fromOrg ? sponsorIds[pair.spIdx] : organizerIds[pair.orgIdx];
-
-        // Sign in as sender to respect RLS
-        const senderEmail = msg.fromOrg ? organizers[pair.orgIdx].email : sponsors[pair.spIdx].email;
-        await supabase.auth.signInWithPassword({ email: senderEmail, password: DEMO_PASSWORD });
-
-        await supabase.from('messages').insert({
-          conversation_id: conv.id,
-          sender_id: senderId,
-          receiver_id: receiverId,
-          content: msg.content,
-        });
-        await sleep(200);
-      }
-      onProgress(`Created conversation ${i + 1} with ${sampleMessages[i].length} messages`);
-    }
-  }
-
-  // Sign out at the end
+  onProgress('✅ Seed complete! Admin and Creators are ready.');
   await supabase.auth.signOut();
-  onProgress('✅ Seed complete! You can now log in with any demo account using password: Demo@12345');
 }

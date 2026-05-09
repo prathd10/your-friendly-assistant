@@ -12,9 +12,12 @@ interface AuthContextType {
     full_name: string;
     organization_name: string;
     city: string;
+    phone?: string;
+    website_url?: string;
   }) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -31,22 +34,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string, retries = 3): Promise<void> => {
+    console.log(`[Auth] Fetching profile for ${userId}, retries left: ${retries}`);
+    
+    // Safety timeout for the fetch itself
+    const fetchPromise = supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const { data, error } = await Promise.race([
+        fetchPromise,
+        new Promise<{ data: null; error: any }>((_, reject) => 
+          setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+        )
+      ]);
+      
       if (data) {
+        console.log('[Auth] Profile found:', data.role);
         setProfile(data);
       } else if (retries > 0) {
+        console.warn('[Auth] Profile not found, retrying in 1s...');
         await new Promise((r) => setTimeout(r, 1000));
         return fetchProfile(userId, retries - 1);
       } else {
-        console.error('Failed to fetch profile after retries', error);
+        console.error('[Auth] Failed to fetch profile after retries', error);
       }
     } catch (err) {
-      console.error('Profile fetch error:', err);
+      console.error('[Auth] Profile fetch error:', err);
     }
   };
 
@@ -55,23 +71,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         console.log('[Auth] State changed:', _event, !!session?.user);
-        setUser(session?.user ?? null);
-        // Set loading false IMMEDIATELY so navigation can proceed
-        setLoading(false);
-        if (session?.user) {
-          // Fetch profile in background - don't block navigation
-          fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
+        
+        try {
+          if (session?.user) {
+            setUser(session.user);
+            setLoading(true);
+            await fetchProfile(session.user.id);
+          } else {
+            setUser(null);
+            setProfile(null);
+          }
+        } finally {
+          setLoading(false);
         }
       }
     );
 
+    // Initial session check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('[Auth] Existing session:', !!session?.user);
-      setUser(session?.user ?? null);
+      console.log('[Auth] Existing session check:', !!session?.user);
       if (session?.user) {
+        setUser(session.user);
         await fetchProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
       }
       setLoading(false);
     });
@@ -84,6 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     full_name: string;
     organization_name: string;
     city: string;
+    phone?: string;
+    website_url?: string;
   }) => {
     try {
       const { error } = await supabase.auth.signUp({
@@ -99,10 +125,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return { error: error as Error | null };
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        // Return a cleaner error object
+        return { error: new Error(error.message) };
+      }
+      return { error: null };
     } catch (error) {
-      return { error: (error instanceof Error ? error : new Error('Network error. Please try again.')) as Error };
+      return { error: (error instanceof Error ? error : new Error('Network error. Please try again.')) };
     }
   };
 
@@ -114,7 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile: () => user ? fetchProfile(user.id) : Promise.resolve() }}>
       {children}
     </AuthContext.Provider>
   );

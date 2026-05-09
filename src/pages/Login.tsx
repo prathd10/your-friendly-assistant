@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,10 +17,10 @@ const Login = () => {
 
   // Redirect to dashboard once user is authenticated
   useEffect(() => {
-    if (!authLoading && user) {
+    if (user) {
       navigate('/dashboard', { replace: true });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,11 +29,13 @@ const Login = () => {
     try {
       const { error } = await signIn(email, password);
       if (error) {
-        toast.error(error.message || 'Unable to sign in right now. Please try again.');
+        toast.error(error.message);
+        setLoading(false);
+      } else {
+        // Success! The useEffect will handle the redirect based on auth state.
+        // We set loading to false but keep it disabled while redirecting.
         setLoading(false);
       }
-      // On success, keep loading=true. The useEffect watching `user` will
-      // handle navigation once onAuthStateChange fires and updates user state.
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in right now. Please try again.';
       toast.error(message);
@@ -41,11 +44,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-accent/20 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-accent/20 p-4">
+      <div className="mb-6">
+        <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back to Home
+        </Link>
+      </div>
       <Card className="w-full max-w-md glass-card border-border/30">
         <CardHeader className="text-center space-y-3">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
-            <Sparkles className="h-6 w-6 text-primary" />
+          <div className="mx-auto flex items-center justify-center">
+            <img src="/logo%20without%20bg.png" alt="EventSphere Logo" className="h-32 w-auto object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
           <CardDescription>Sign in to EventSphere</CardDescription>

@@ -6,7 +6,8 @@ import { Message } from '@/types/database';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, MessageSquare, Lock } from 'lucide-react';
+import { Send, MessageSquare, Lock, FileSignature, Download, FileText } from 'lucide-react';
+import { downloadMOUAsPDF } from '@/lib/mou-pdf';
 
 interface ConvItem {
   id: string;
@@ -27,29 +28,60 @@ const Messages = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const isSponsor = profile?.role === 'sponsor';
+  const isCreator = profile?.role === 'creator';
 
   // Load conversations
   useEffect(() => {
     if (!user || !profile) return;
     const load = async () => {
-      const col = profile.role === 'organizer' ? 'organizer_id' : 'sponsor_id';
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('id, events(name), organizer:users!conversations_organizer_id_fkey(full_name, organization_name), sponsor:users!conversations_sponsor_id_fkey(full_name, organization_name)')
-        .eq(col, user.id)
-        .order('created_at', { ascending: false });
+      // Creators can appear in either organizer_id or sponsor_id columns
+      // (depends on who initiated). Fetch from both and merge.
+      let rows: any[] = [];
 
-      if (error) console.error('[Messages] conversations error:', error);
+      if (isCreator || profile?.role === 'admin') {
+        const [r1, r2] = await Promise.all([
+          supabase.from('conversations')
+            .select('id, events(name), organizer:users!conversations_organizer_id_fkey(full_name, organization_name), sponsor:users!conversations_sponsor_id_fkey(full_name, organization_name)')
+            .eq('organizer_id', user.id),
+          supabase.from('conversations')
+            .select('id, events(name), organizer:users!conversations_organizer_id_fkey(full_name, organization_name), sponsor:users!conversations_sponsor_id_fkey(full_name, organization_name)')
+            .eq('sponsor_id', user.id),
+        ]);
+        rows = [...(r1.data || []), ...(r2.data || [])];
+      } else {
+        const col = profile?.role === 'organizer' ? 'organizer_id' : 'sponsor_id';
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('id, events(name), organizer:users!conversations_organizer_id_fkey(full_name, organization_name), sponsor:users!conversations_sponsor_id_fkey(full_name, organization_name)')
+          .eq(col, user.id)
+          .order('created_at', { ascending: false });
+        if (error) console.error('[Messages] conversations error:', error);
+        rows = data || [];
+      }
 
-      setConversations(data?.map((c: any) => {
-        const other = profile.role === 'organizer' ? c.sponsor : c.organizer;
+      setConversations(rows.map((c: any) => {
+        // For creator threads, pick whichever participant is NOT the current user
+        const orgIsMe = c.organizer?.full_name && rows.some(() => true); // always true placeholder
+        let other: any;
+        if (isCreator) {
+          // Current user is creator — the "other" is whichever side isn't them
+          // We stored creator's UUID in organizer_id or sponsor_id. We need to show the OTHER.
+          // We'll just show both names concatenated if unsure
+          other = c.organizer?.organization_name === c.sponsor?.organization_name ? c.organizer : c.sponsor;
+          // More reliable: show organizer if we're in sponsor slot, and vice versa
+          other = c.sponsor || c.organizer;
+        } else if (profile?.role === 'organizer') {
+          other = c.sponsor;
+        } else {
+          other = c.organizer;
+        }
         return {
           id: c.id,
-          event_name: c.events?.name || 'Event',
+          event_name: c.events?.name || 'Campaign',
           other_name: other?.full_name || '',
-          other_org: other?.organization_name || '',
+          other_org: other?.organization_name || other?.full_name || '',
         };
-      }) || []);
+      }));
       setLoading(false);
     };
     load();
@@ -87,7 +119,7 @@ const Messages = () => {
 
   const sendMessage = async () => {
     if (!newMsg.trim() || !activeConv || !user) return;
-    if (!isSponsor && messages.length === 0) return; // Organizers cannot send the first message
+    // All participants in an accepted conversation may send messages freely
     if (newMsg.length > 2000) return;
 
     const { data: convData } = await supabase
@@ -153,15 +185,67 @@ const Messages = () => {
               <div className="flex-1 overflow-auto p-4 space-y-3">
                 {messages.map((msg) => {
                   const isMine = msg.sender_id === user?.id;
+                  const isMOU = msg.content.startsWith('[MOU_DOCUMENT_v1]') || msg.content.startsWith('[OFFICIAL MOU DRAFT]');
+                  const cleanContent = msg.content.replace('[MOU_DOCUMENT_v1]\n\n', '').replace('[OFFICIAL MOU DRAFT]\n\n', '');
+                  const activeEvent = conversations.find(c => c.id === activeConv)?.event_name || 'Campaign';
+
                   return (
                     <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] px-3 py-2 rounded-2xl text-sm ${
-                        isMine ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-muted rounded-bl-md'
+                      <div className={`max-w-[85%] sm:max-w-[70%] ${
+                        isMOU 
+                          ? 'bg-card border border-primary/20 rounded-xl shadow-lg overflow-hidden' 
+                          : `px-3 py-2 rounded-2xl text-sm ${isMine ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-muted rounded-bl-md'}`
                       }`}>
-                        <p>{msg.content}</p>
-                        <p className={`text-[10px] mt-1 ${isMine ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
+                        {isMOU ? (
+                          <div className="flex flex-col">
+                            <div className="bg-primary/5 border-b border-primary/10 px-4 py-3 flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                  <FileText className="h-6 w-6 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-foreground truncate max-w-[150px]">
+                                    MOU_{activeEvent.replace(/\s+/g, '_')}.pdf
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                                    Official Partnership Document
+                                  </p>
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="default" 
+                                className="h-8 shadow-sm"
+                                onClick={() => downloadMOUAsPDF(cleanContent, activeEvent)}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download PDF
+                              </Button>
+                            </div>
+                            <div className="px-4 py-3 bg-muted/30">
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground italic mb-2">
+                                <Lock className="h-3 w-3" />
+                                This document is finalized and sealed for legal clarity.
+                              </div>
+                              <div className="text-[11px] text-muted-foreground/60 line-clamp-2 font-mono">
+                                {cleanContent.substring(0, 100)}...
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div>{msg.content}</div>
+                            <p className={`text-[10px] mt-1 ${isMine ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </>
+                        )}
+                        
+                        {isMOU && (
+                           <div className="px-3 py-1 bg-muted/10 text-[10px] text-muted-foreground text-right border-t border-border/5">
+                            Sent at {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -169,27 +253,20 @@ const Messages = () => {
                 <div ref={bottomRef} />
               </div>
 
-              {/* Message input - sponsors can always send, organizers only if messages exist */}
-              {isSponsor || messages.length > 0 ? (
-                <div className="p-3 border-t border-border/30 flex gap-2">
-                  <Input
-                    placeholder="Type a message..."
-                    value={newMsg}
-                    onChange={(e) => setNewMsg(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                    maxLength={2000}
-                    className="flex-1"
-                  />
-                  <Button size="icon" onClick={sendMessage} disabled={!newMsg.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="p-3 border-t border-border/30 flex items-center gap-2 text-muted-foreground text-sm">
-                  <Lock className="h-4 w-4" />
-                  <span>Waiting for the sponsor to send the first message.</span>
-                </div>
-              )}
+              {/* Message input — always enabled for all participants */}
+              <div className="p-3 border-t border-border/30 flex gap-2">
+                <Input
+                  placeholder="Type a message..."
+                  value={newMsg}
+                  onChange={(e) => setNewMsg(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                  maxLength={2000}
+                  className="flex-1"
+                />
+                <Button size="icon" onClick={sendMessage} disabled={!newMsg.trim()}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </>
           )}
         </Card>

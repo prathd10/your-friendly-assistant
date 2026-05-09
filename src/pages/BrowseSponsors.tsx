@@ -141,9 +141,15 @@ const BrowseSponsors = () => {
               >
                 <CardContent className="p-5 space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Building className="h-5 w-5 text-primary" />
-                    </div>
+                    {sponsor.profile_photo ? (
+                      <img src={sponsor.profile_photo} alt="" className="h-10 w-10 rounded-full object-cover border border-border" />
+                    ) : sponsor.organization_logo ? (
+                      <img src={sponsor.organization_logo} alt="" className="h-10 w-10 rounded-full object-contain border border-border bg-muted/50 p-1" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Building className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-semibold">{sponsor.organization_name}</h3>
                       <p className="text-xs text-muted-foreground">{sponsor.full_name}</p>
@@ -177,9 +183,15 @@ const BrowseSponsors = () => {
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Building className="h-5 w-5 text-primary" />
-                    </div>
+                    {selectedSponsor.profile_photo ? (
+                      <img src={selectedSponsor.profile_photo} alt="" className="h-10 w-10 rounded-full object-cover border border-border" />
+                    ) : selectedSponsor.organization_logo ? (
+                      <img src={selectedSponsor.organization_logo} alt="" className="h-10 w-10 rounded-full object-contain border border-border bg-muted/50 p-1" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <Building className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
                     {selectedSponsor.organization_name}
                   </DialogTitle>
                   <DialogDescription>{selectedSponsor.full_name} • {selectedSponsor.city}</DialogDescription>

@@ -11,6 +11,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { LayoutDashboard, Edit } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -95,6 +97,18 @@ const MyEvents = () => {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2 border-t border-border/30">
+                  <Button asChild variant="default" size="sm" className="text-xs gap-1">
+                    <Link to={`/event/${event.id}/dashboard`}>
+                      <LayoutDashboard className="h-3 w-3" /> Dashboard
+                    </Link>
+                  </Button>
+                  
+                  <Button asChild variant="outline" size="sm" className="text-xs gap-1">
+                    <Link to={`/event/${event.id}/edit`}>
+                      <Edit className="h-3 w-3" /> Edit
+                    </Link>
+                  </Button>
+
                   {event.status === 'active' && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

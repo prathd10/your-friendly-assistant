@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, MessageSquare, Sparkles, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import VirtualWallet from '@/components/VirtualWallet';
 
 const COLORS = ['hsl(349,70%,65%)', 'hsl(240,67%,75%)', 'hsl(170,50%,60%)', 'hsl(40,80%,65%)', 'hsl(280,50%,65%)'];
 
@@ -53,7 +54,16 @@ const SponsorDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Sponsor Dashboard</h1>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Sponsor Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Manage your event sponsorships and track ROI</p>
+        </div>
+        <div className="w-full md:w-80">
+          <VirtualWallet />
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {statCards.map((s) => (
           <Card key={s.label} className="glass-card border-border/30">

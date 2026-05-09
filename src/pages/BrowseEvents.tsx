@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, MapPin, Users, IndianRupee, Search, Globe, FileText, TrendingUp, Target, Tag, MessageCircle, Building, Star, Megaphone, Send } from 'lucide-react';
+import { Calendar, MapPin, Users, IndianRupee, Search, Globe, FileText, TrendingUp, Target, Tag, MessageCircle, Building, Star, Megaphone, Send, Sparkles, Film } from 'lucide-react';
+import AIPitchDeck from '@/components/AIPitchDeck';
+import AIVideoGenerator from '@/components/AIVideoGenerator';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -25,6 +27,8 @@ const BrowseEvents = () => {
   const [search, setSearch] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [sendingRequest, setSendingRequest] = useState(false);
+  const [showPitchDeck, setShowPitchDeck] = useState(false);
+  const [showVideoScript, setShowVideoScript] = useState(false);
 
   useEffect(() => {
     supabase
@@ -211,7 +215,11 @@ const BrowseEvents = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <DetailItem icon={<Users className="h-4 w-4" />} label="Expected Footfall" value={selectedEvent.expected_footfall.toLocaleString()} />
                     {selectedEvent.previous_year_footfall && <DetailItem icon={<Users className="h-4 w-4" />} label="Previous Year Footfall" value={selectedEvent.previous_year_footfall.toLocaleString()} />}
-                    <DetailItem icon={<Target className="h-4 w-4" />} label="Target Demographics" value={selectedEvent.target_demographics} />
+                    <DetailItem 
+                      icon={<Target className="h-4 w-4" />} 
+                      label="Target Demographics" 
+                      value={typeof selectedEvent.target_demographics === 'string' ? selectedEvent.target_demographics : 'Mixed (See Profile)'} 
+                    />
                     {selectedEvent.social_media_reach && <DetailItem icon={<Megaphone className="h-4 w-4" />} label="Social Media Reach" value={selectedEvent.social_media_reach.toLocaleString()} />}
                   </div>
                 </div>
@@ -219,7 +227,33 @@ const BrowseEvents = () => {
                 {(selectedEvent.sponsorship_tiers || selectedEvent.sponsor_deliverables || selectedEvent.usp) && (<><Separator /><div className="space-y-3"><h4 className="font-semibold text-sm flex items-center gap-2"><IndianRupee className="h-4 w-4 text-primary" /> Sponsorship Details</h4>{selectedEvent.sponsorship_tiers && <div><span className="text-xs font-medium text-muted-foreground">Tiers:</span><p className="text-sm mt-0.5">{selectedEvent.sponsorship_tiers}</p></div>}{selectedEvent.sponsor_deliverables && <div><span className="text-xs font-medium text-muted-foreground">Deliverables:</span><p className="text-sm mt-0.5">{selectedEvent.sponsor_deliverables}</p></div>}{selectedEvent.usp && <div><span className="text-xs font-medium text-muted-foreground">USP:</span><p className="text-sm mt-0.5">{selectedEvent.usp}</p></div>}</div></>)}
                 {(selectedEvent.past_sponsors || selectedEvent.media_coverage) && (<><Separator /><div className="space-y-3">{selectedEvent.past_sponsors && <div><span className="text-xs font-medium text-muted-foreground">Past Sponsors:</span><p className="text-sm mt-0.5">{selectedEvent.past_sponsors}</p></div>}{selectedEvent.media_coverage && <div><span className="text-xs font-medium text-muted-foreground">Media Coverage:</span><p className="text-sm mt-0.5">{selectedEvent.media_coverage}</p></div>}</div></>)}
                 {selectedEvent.tags?.length > 0 && (<><Separator /><div className="space-y-2"><h4 className="font-semibold text-sm flex items-center gap-2"><Tag className="h-4 w-4 text-primary" /> Tags</h4><div className="flex flex-wrap gap-1.5">{selectedEvent.tags.map((t) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}</div></div></>)}
-                {(selectedEvent.pitch_deck_url || selectedEvent.website_url) && (<><Separator /><div className="flex flex-wrap gap-3">{selectedEvent.pitch_deck_url && <a href={selectedEvent.pitch_deck_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"><FileText className="h-4 w-4" /> View Pitch Deck</a>}{selectedEvent.website_url && <a href={selectedEvent.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"><Globe className="h-4 w-4" /> Event Website</a>}</div></>)}
+                {(selectedEvent.ai_pitch_deck || selectedEvent.pitch_deck_url || selectedEvent.website_url) && (
+                  <>
+                    <Separator />
+                    <div className="flex flex-wrap gap-3 items-center">
+                      {selectedEvent.ai_pitch_deck && (
+                        <Button size="sm" variant="outline" className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5" onClick={() => setShowPitchDeck(true)}>
+                          <Sparkles className="h-4 w-4" /> View Pitch Deck
+                        </Button>
+                      )}
+                      {selectedEvent.ai_video_script && (
+                        <Button size="sm" variant="outline" className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5" onClick={() => setShowVideoScript(true)}>
+                          <Film className="h-4 w-4" /> Watch Video Pitch
+                        </Button>
+                      )}
+                      {selectedEvent.pitch_deck_url && (
+                        <a href={selectedEvent.pitch_deck_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                          <FileText className="h-4 w-4" /> View Pitch Deck
+                        </a>
+                      )}
+                      {selectedEvent.website_url && (
+                        <a href={selectedEvent.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                          <Globe className="h-4 w-4" /> Event Website
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 <Separator />
 
@@ -243,11 +277,60 @@ const BrowseEvents = () => {
                     Message Organizer
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
+                
+                <div className="flex justify-center mt-2">
+                  <Button 
+                    variant="ghost" 
+                    className="text-primary hover:text-primary/80 hover:bg-primary/10 w-full"
+                    onClick={() => {
+                      if (selectedEvent) {
+                        navigate(`/organizer/${selectedEvent.organizer_id}`);
+                      }
+                    }}
+                  >
+                    <Building className="h-4 w-4 mr-2" />
+                    View Organizer Profile & Past Events
+                  </Button>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center mt-3">
                   Connection request must be accepted before you can message the organizer.
                 </p>
               </div>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* Video Pitch Viewer */}
+      <Dialog open={showVideoScript} onOpenChange={setShowVideoScript}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Film className="h-4 w-4 text-primary" />
+              {selectedEvent?.name} — Video Pitch
+            </DialogTitle>
+          </DialogHeader>
+          {selectedEvent?.ai_video_script && (
+            <AIVideoGenerator
+              eventData={selectedEvent}
+              media={selectedEvent.past_event_media || []}
+              script={selectedEvent.ai_video_script as any}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Pitch Deck Viewer */}
+      <Dialog open={showPitchDeck} onOpenChange={setShowPitchDeck}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              {selectedEvent?.name} — Sponsor Pitch Deck
+            </DialogTitle>
+          </DialogHeader>
+          {selectedEvent?.ai_pitch_deck && (
+            <AIPitchDeck data={selectedEvent.ai_pitch_deck} />
           )}
         </DialogContent>
       </Dialog>

@@ -1,11 +1,35 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY?.trim();
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+const apiKey = import.meta.env.VITE_OPENAI_API_KEY?.trim();
+
+/**
+ * Helper to call OpenAI Chat Completions API using fetch
+ */
+async function callOpenAI(messages: any[], model: string = "gpt-4o-mini", temperature: number = 0.7) {
+  if (!apiKey) throw new Error("OpenAI API Key is missing");
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || "OpenAI API request failed");
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
 
 export const generateEventPitch = async (eventData: any, _images: string[]) => {
-  if (!genAI) throw new Error("Gemini API Key is missing");
-
   const tagsStr = Array.isArray(eventData.tags)
     ? eventData.tags.join(', ')
     : eventData.tags || 'N/A';
@@ -91,57 +115,29 @@ Return ONLY valid JSON — no markdown, no explanation, just the JSON object:
 }
 
 SLIDE ORDER (mandatory):
-1. type: "cover" — Event name + tagline + date/venue/city
-2. type: "content" — The Opportunity (why this event matters NOW, market trends)
-3. type: "content" — About The Event (format, scale, positioning)
-4. type: "metrics" — Audience Profile (4 key metrics + bullet context)
-5. type: "content" — Event Highlights & Lineup (key activities, experiences)
-6. type: "metrics" — Reach & Visibility (footfall, social, media channels as metrics)
-7. type: "tiers" — Sponsorship Opportunities (parse tiers from data, 3 tiers max)
-8. type: "content" — ROI for Sponsors (specific returns, not generic)
-9. type: "content" — Past Traction & Credibility (history, past sponsors, media)
-10. type: "cta" — Call To Action (strong close, contact direction)
+1. type: "cover"
+2. type: "content" (The Opportunity)
+3. type: "content" (About The Event)
+4. type: "metrics" (Audience Profile)
+5. type: "content" (Event Highlights & Lineup)
+6. type: "metrics" (Reach & Visibility)
+7. type: "tiers" (Sponsorship Opportunities)
+8. type: "content" (ROI for Sponsors)
+9. type: "content" (Past Traction & Credibility)
+10. type: "cta" (Call To Action)
 `;
 
   try {
-    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite-preview-02-05"];
-    let resultText = "";
-    
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`Pitch Gen: Attempting with ${modelName}...`);
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
-            })
-          }
-        );
-
-        const data = await response.json();
-        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          resultText = data.candidates[0].content.parts[0].text;
-          console.log(`Pitch Gen: Success with ${modelName}`);
-          break;
-        } else {
-          throw new Error(data.error?.message || "Empty response");
-        }
-      } catch (e: any) {
-        console.warn(`Pitch Gen: ${modelName} failed (${e.message}), trying next...`);
-      }
-    }
-
-    if (!resultText) throw new Error("All models failed to generate pitch");
+    const resultText = await callOpenAI([
+      { role: "system", content: "You are a world-class pitch deck consultant. Return only valid JSON." },
+      { role: "user", content: prompt }
+    ]);
 
     const jsonStr = resultText.match(/\{[\s\S]*\}/)?.[0] || resultText;
     return JSON.parse(jsonStr);
   } catch (error) {
     console.error("Pitch Gen Error:", error);
-    // Robust 10-slide fallback using real event data
+    // Fallback logic remains the same
     return {
       slides: [
         {
@@ -251,8 +247,6 @@ SLIDE ORDER (mandatory):
 };
 
 export const generateMOUDraft = async (req: any) => {
-  if (!genAI) throw new Error("Gemini API Key is missing");
-
   const otherUser = req.sender;
   const recipient = req.receiver;
   const event = req.event;
@@ -293,30 +287,10 @@ Note: NO markdown bold (**). Use UPPERCASE for section headers.
 `;
 
   try {
-    const modelsToTry = ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash-lite"];
-    let text = "";
-    
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`MOU Draft: Attempting with ${modelName}...`);
-        const model = genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
-        const generationConfig = { temperature: 0.1, maxOutputTokens: 2048 };
-        
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        text = response.text();
-        if (text) {
-          console.log(`--- MOU Draft: Successfully used ${modelName} ---`);
-          break;
-        }
-      } catch (e: any) {
-        console.warn(`MOU Draft: ${modelName} failed (${e.message}), trying next...`);
-        // If it's a rate limit (429), wait 5 seconds before trying the next model
-        if (e.message?.includes('429')) {
-          await new Promise(resolve => setTimeout(resolve, 5000));
-        }
-      }
-    }
+    const text = await callOpenAI([
+      { role: "system", content: "You are a Senior Legal Counsel drafting a professional MOU." },
+      { role: "user", content: prompt }
+    ], "gpt-4o-mini", 0.1);
     
     return text || "MEMORANDUM OF UNDERSTANDING\n\n[DRAFT FAILED: Please try again or draft manually]";
   } catch (error) {
@@ -326,8 +300,6 @@ Note: NO markdown bold (**). Use UPPERCASE for section headers.
 };
 
 export const generateVideoScript = async (eventData: any) => {
-  if (!genAI) throw new Error("Gemini API Key is missing");
-
   const prompt = `
 You are writing a cinematic, professional sponsor pitch video script for an Indian event.
 The video will have voice narration and visual scenes with background images.
@@ -357,16 +329,15 @@ RULES:
 - overlay must be 4 words or fewer — punchy and bold
 - Build narrative momentum: Hook → Context → Event → Audience → Numbers → Ask → Close
 - Use REAL data from the event — no generic filler
-- No corporate jargon — speak like a confident pitch, not a brochure
 
 SCENE STRUCTURE (follow exactly):
-1. HOOK — Open bold: event name + what this event stands for
-2. THE MOMENT — Why this category/industry matters RIGHT NOW in India
-3. THE EVENT — What it is, the format, the scale, the experience
-4. THE AUDIENCE — Who attends and why brands crave this demographic
-5. THE NUMBERS — Hard data: footfall, reach, growth, budget
-6. THE PARTNERSHIP — Tiers, deliverables, what a sponsor actually gets
-7. THE CLOSE — Urgency + CTA: limited spots, act now, contact
+1. HOOK
+2. THE MOMENT
+3. THE EVENT
+4. THE AUDIENCE
+5. THE NUMBERS
+6. THE PARTNERSHIP
+7. THE CLOSE
 
 Return ONLY valid JSON — no markdown, no explanation:
 {
@@ -381,28 +352,17 @@ Return ONLY valid JSON — no markdown, no explanation:
 `;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
-        })
-      }
-    );
+    const text = await callOpenAI([
+      { role: "system", content: "You are a cinematic script writer. Return only valid JSON." },
+      { role: "user", content: prompt }
+    ], "gpt-4o-mini", 0.8);
 
-    const data = await response.json();
-    if (!data.candidates?.[0]) throw new Error("No script generated");
-
-    const text = data.candidates[0].content.parts[0].text;
     const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
     const result = JSON.parse(jsonStr);
     return { ...result, isAI: true };
 
   } catch (error) {
-    // Narrative fallback using real event data
+    // Fallback logic remains the same
     return {
       isAI: false,
       scenes: [
@@ -469,23 +429,19 @@ export const analyzeDiscoveryIntentNew = async (organizerPrompt: string) => {
     }
   });
 
-  // BROAD QUERY DETECTION: If user says "host", "plan", "organize" or "need help" without specific roles
   const broadTriggers = ['host', 'plan', 'organize', 'arranging', 'setup', 'event', 'help', 'need help', 'booking'];
   const isBroad = broadTriggers.some(t => text.includes(t));
 
   if (rolesNeeded.length === 0 || (isBroad && rolesNeeded.length < 3)) {
-    // If it's a broad "host" query, give them a mix of everything
     ['sponsor', 'creator', 'performer', 'vendor'].forEach(r => {
       if (!rolesNeeded.includes(r)) rolesNeeded.push(r);
     });
   }
 
-  // 2. Venue & Environment Detection
   const venueKeywords = ['hotel', 'resort', 'college', 'campus', 'stadium', 'ground', 'ballroom', 'hall', 'indoor', 'outdoor', 'beach', 'cafe', 'rooftop', 'office', 'convention'];
   const detectedVenues = venueKeywords.filter(v => text.includes(v));
   keywords.push(...detectedVenues);
 
-  // 3. City Detection
   const cities = ['mumbai', 'delhi', 'bangalore', 'pune', 'hyderabad', 'chennai', 'kolkata', 'ahmedabad', 'gurgaon', 'noida', 'jaipur', 'goa', 'indore', 'chandigarh'];
   let detectedCity = null;
   for (const city of cities) {
@@ -496,7 +452,6 @@ export const analyzeDiscoveryIntentNew = async (organizerPrompt: string) => {
     }
   }
 
-  // 4. Category Detection
   const categories = ['Tech', 'Cultural', 'Startup', 'Sports', 'Music', 'College Fest', 'Corporate', 'Art', 'Food', 'Health', 'Wedding', 'Gaming'];
   let detectedCategory = 'Other';
   for (const cat of categories) {
@@ -506,9 +461,7 @@ export const analyzeDiscoveryIntentNew = async (organizerPrompt: string) => {
     }
   }
 
-  // 5. Date Detection (Improved)
   let detectedDate = null;
-  // Match patterns like "28th April", "April 28", "28-04", "28th april 2026"
   const dateRegex = /(\d{1,2})(?:st|nd|rd|th)?[\s\.\/-]+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)/i;
   const dateMatch = text.match(dateRegex);
   
@@ -517,7 +470,6 @@ export const analyzeDiscoveryIntentNew = async (organizerPrompt: string) => {
     keywords.push(detectedDate);
   }
 
-  // 6. Budget Extraction
   let approximateBudget = null;
   const budgetMatch = text.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)(?:\s*-\s*(\d+(?:\.\d+)?))?\s*(k|lakh|l|cr|thousand|m|b)?/i);
   

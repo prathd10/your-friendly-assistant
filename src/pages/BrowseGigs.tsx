@@ -314,7 +314,7 @@ const BrowseGigs = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Your Rate for this Gig (₹) <span className="text-xs text-muted-foreground">(optional)</span></p>
+                    <p className="text-sm font-medium">Your Commercials for this Gig (₹) <span className="text-xs text-muted-foreground">(optional)</span></p>
                     <Input
                       type="number"
                       placeholder={`e.g. ${profile.pricing_per_post?.toLocaleString() || '15000'}`}
@@ -322,7 +322,7 @@ const BrowseGigs = () => {
                       onChange={e => setBudget(e.target.value)}
                     />
                     {profile.pricing_per_post && !budget && (
-                      <p className="text-xs text-muted-foreground">Your default rate: ₹{profile.pricing_per_post.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Your default commercials: ₹{profile.pricing_per_post.toLocaleString()}</p>
                     )}
                   </div>
 

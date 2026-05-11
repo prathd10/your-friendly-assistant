@@ -248,7 +248,7 @@ const BrowseVendors = () => {
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-sm mb-1 flex items-center gap-1"><IndianRupee className="h-4 w-4 text-primary" /> Standard Rates</h4>
+                    <h4 className="font-semibold text-sm mb-1 flex items-center gap-1"><IndianRupee className="h-4 w-4 text-primary" /> Standard Commercials</h4>
                     <p className="text-sm">
                       Starting at <span className="font-semibold text-primary">₹{selectedVendor.pricing_per_post?.toLocaleString() || 0}</span> 
                       <span className="text-muted-foreground text-xs ml-1">base package price</span>

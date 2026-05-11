@@ -270,10 +270,16 @@ const AIPitchDeck = ({ data, eventId }: AIPitchDeckProps) => {
     const toastId = toast.loading('Preparing high-resolution PDF...');
     
     try {
+      // 1. Wait for fonts to be ready
+      if (document.fonts) {
+        await document.fonts.ready;
+      }
+
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'px',
-        format: [1280, 720]
+        format: [1280, 720],
+        hotfixes: ['px_scaling']
       });
 
       for (let i = 0; i < data.slides.length; i++) {
@@ -283,50 +289,61 @@ const AIPitchDeck = ({ data, eventId }: AIPitchDeckProps) => {
           continue;
         }
 
-        // Delay to allow any heavy JS/Layout to settle
-        await new Promise(r => setTimeout(r, 250));
+        // Wait for potential images to load and layout to settle
+        await new Promise(r => setTimeout(r, 500));
 
         const canvas = await html2canvas(el, {
-          scale: 2,
+          scale: 1.5, // Slightly lower scale for better compatibility
           useCORS: true,
-          logging: false,
+          allowTaint: false,
+          logging: true, // Enable logging to see errors in console
           backgroundColor: '#0a0a0f',
           width: 1280,
           height: 720,
           scrollX: 0,
           scrollY: 0,
+          imageTimeout: 15000,
           onclone: (doc) => {
-            // Force cloned elements to be visible and correctly positioned
             const clonedEl = doc.getElementById(`pdf-slide-${i}`);
             if (clonedEl) {
               clonedEl.style.position = 'fixed';
               clonedEl.style.top = '0';
               clonedEl.style.left = '0';
-              clonedEl.style.width = '1280px';
-              clonedEl.style.height = '720px';
               clonedEl.style.visibility = 'visible';
               clonedEl.style.display = 'block';
               clonedEl.style.opacity = '1';
+              clonedEl.style.transform = 'none';
+              
+              // Ensure all images in the clone have crossOrigin
+              const images = clonedEl.getElementsByTagName('img');
+              for (let img of Array.from(images)) {
+                img.crossOrigin = 'anonymous';
+              }
             }
           }
         });
 
         if (canvas.width === 0 || canvas.height === 0) {
-          throw new Error(`Critical Error: Captured slide ${i+1} has 0 size. Please try again.`);
+          throw new Error(`Slide ${i+1} capture failed (0px size)`);
         }
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        if (i > 0) pdf.addPage([1280, 720], 'landscape');
-        pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
+        try {
+          const imgData = canvas.toDataURL('image/jpeg', 0.85); // Slightly lower quality for memory
+          if (i > 0) pdf.addPage([1280, 720], 'landscape');
+          pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720, undefined, 'FAST');
+        } catch (dataErr) {
+          console.error(`Error converting slide ${i+1} to data URL:`, dataErr);
+          throw new Error(`Security or Memory error on slide ${i+1}. Try a simpler deck.`);
+        }
       }
 
       const eventTitle = data.slides[0]?.title || 'Pitch_Deck';
       const safeName = eventTitle.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
       pdf.save(`${safeName}.pdf`);
-      toast.success('High-quality PDF downloaded!', { id: toastId });
+      toast.success('PDF downloaded successfully!', { id: toastId });
     } catch (err: any) {
       console.error('PDF Export Error:', err);
-      toast.error(`Export Error: ${err.message || 'Please try refreshing the page.'}`, { id: toastId });
+      toast.error(`Export Error: ${err.message || 'Check browser console for details.'}`, { id: toastId });
     } finally {
       setIsExporting(false);
     }

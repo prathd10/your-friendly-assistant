@@ -134,7 +134,7 @@ const PublicProfile = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-muted/30 p-4 rounded-xl text-center border border-border/30">
-          <p className="text-2xl font-black text-primary">{userProfile.followers_count ? (userProfile.followers_count >= 1000 ? `${(userProfile.followers_count / 1000).toFixed(1)}K` : userProfile.followers_count) : 'N/A'}</p>
+          <p className="text-2xl font-black text-primary">{userProfile.followers_count ? (Number(userProfile.followers_count) >= 1000 ? `${(Number(userProfile.followers_count) / 1000).toFixed(1)}K` : userProfile.followers_count) : 'N/A'}</p>
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1 font-bold">Followers</p>
         </div>
         <div className="bg-muted/30 p-4 rounded-xl text-center border border-border/30">
@@ -151,7 +151,7 @@ const PublicProfile = () => {
         </div>
       </div>
       
-      {userProfile.pricing_per_post && (
+      {userProfile.pricing_per_post !== undefined && userProfile.pricing_per_post !== null && (
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4 flex items-center justify-between">
              <div className="flex items-center gap-3">
@@ -159,8 +159,8 @@ const PublicProfile = () => {
                    <IndianRupee className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Starting Price</p>
-                   <p className="text-xl font-bold">₹{userProfile.pricing_per_post.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">/ campaign</span></p>
+                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Starting Commercials</p>
+                   <p className="text-xl font-bold">₹{Number(userProfile.pricing_per_post).toLocaleString()} <span className="text-xs font-normal text-muted-foreground">/ campaign</span></p>
                 </div>
              </div>
              <Button onClick={() => setIsRequestDialogOpen(true)}>
@@ -199,13 +199,13 @@ const PublicProfile = () => {
               </div>
               <div className="pb-2">
                 <div className="flex items-center gap-2 mb-1">
-                   <h1 className="text-3xl font-black tracking-tight">{userProfile.organization_name || userProfile.full_name}</h1>
-                   {userProfile.verification_status === 'verified' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                   <h1 className="text-3xl font-black tracking-tight">{userProfile?.organization_name || userProfile?.full_name}</h1>
+                   {userProfile?.verification_status === 'verified' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                  <Badge variant="secondary" className="capitalize px-3">{userProfile.role}</Badge>
-                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {userProfile.city || 'India'}</span>
-                  {userProfile.website_url && (
+                  <Badge variant="secondary" className="capitalize px-3">{userProfile?.role}</Badge>
+                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {userProfile?.city || 'India'}</span>
+                  {userProfile?.website_url && (
                     <a href={userProfile.website_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-primary hover:underline">
                       <Globe className="h-3 w-3" /> Website
                     </a>
@@ -230,7 +230,7 @@ const PublicProfile = () => {
               <div>
                 <h3 className="text-lg font-bold mb-3">About</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  {userProfile.business_description || `A professional ${userProfile.role} dedicated to excellence in the ${userProfile.niche || 'event'} space. Contact for collaborations.`}
+                  {userProfile?.business_description || `A professional ${userProfile?.role} dedicated to excellence in the ${userProfile?.niche || 'event'} space. Contact for collaborations.`}
                 </p>
               </div>
 
@@ -259,17 +259,17 @@ const PublicProfile = () => {
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase font-bold">Email</p>
-                      <p className="font-medium">{userProfile.email}</p>
+                      <p className="font-medium">{userProfile?.email}</p>
                     </div>
                   </div>
-                  {userProfile.phone && (
+                  {userProfile?.phone && (
                     <div className="flex items-center gap-3 text-sm">
                       <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center border">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div>
                         <p className="text-[10px] text-muted-foreground uppercase font-bold">Phone</p>
-                        <p className="font-medium">{userProfile.phone}</p>
+                        <p className="font-medium">{userProfile?.phone}</p>
                       </div>
                     </div>
                   )}

@@ -14,6 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { signIn, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const isAdminPath = window.location.pathname === '/admin/login';
 
   // Redirect to dashboard once user is authenticated
   useEffect(() => {
@@ -55,8 +56,8 @@ const Login = () => {
           <div className="mx-auto flex items-center justify-center">
             <img src="/logo%20without%20bg.png" alt="EventSphere Logo" className="h-32 w-auto object-contain" />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>Sign in to EventSphere</CardDescription>
+          <CardTitle className="text-2xl font-bold">{isAdminPath ? 'Admin Portal' : 'Welcome back'}</CardTitle>
+          <CardDescription>{isAdminPath ? 'Authorized personnel only' : 'Sign in to EventSphere'}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,10 +81,12 @@ const Login = () => {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-primary hover:underline font-medium">Sign up</Link>
-          </p>
+          {!isAdminPath && (
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              Don't have an account?{' '}
+              <Link to="/signup" className="text-primary hover:underline font-medium">Sign up</Link>
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

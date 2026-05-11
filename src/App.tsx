@@ -46,6 +46,7 @@ const App = () => (
           <NotificationsProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/admin/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/seed" element={<Seed />} />
             <Route path="/" element={<Index />} />

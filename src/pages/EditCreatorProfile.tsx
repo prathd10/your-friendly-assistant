@@ -267,7 +267,7 @@ const EditCreatorProfile = () => {
             <Textarea name="audience_demographics" placeholder="e.g. 60% Gen-Z, mostly Tier 1 cities in India" value={formData.audience_demographics} onChange={handleChange} />
           </div>
           <div className="space-y-2">
-            <Label>Starting Rate per Post / Collaboration (₹) *</Label>
+            <Label>Starting Commercials per Post / Collaboration (₹) *</Label>
             <Input name="pricing_per_post" type="number" placeholder="e.g. 15000" value={formData.pricing_per_post} onChange={handleChange} />
           </div>
           <Button onClick={handleSave} disabled={loading} className="w-full mt-4">

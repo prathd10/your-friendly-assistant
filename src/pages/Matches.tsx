@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Sparkles, MessageSquare, Send, Users, Building2, CheckCircle2, Clock, Loader2, Star, MapPin, Music, Truck, FileText } from 'lucide-react';
+import { Sparkles, MessageSquare, Send, Users, Building2, CheckCircle2, Clock, Loader2, Star, MapPin, Music, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -38,6 +38,7 @@ interface CreatorMatch {
   pricing_per_post: number;
   verification_status: string;
   city: string;
+  organization_name?: string;
 }
 
 interface MyEvent {
@@ -168,7 +169,7 @@ const Matches = () => {
   const loadSponsorData = async () => {
     const { data: matchData } = await supabase
       .from('matches')
-      .select('*, events(name, category, city, organizer_id)')
+      .select('*, events(name, category, city, organizer_id, organizer:users!events_organizer_id_fkey(full_name, organization_name))')
       .eq('sponsor_id', user!.id)
       .order('match_score', { ascending: false });
 
@@ -178,7 +179,8 @@ const Matches = () => {
       event_name: m.events?.name || '',
       event_category: m.events?.category || '',
       event_city: m.events?.city || '',
-      counterpart_name: '', counterpart_org: '',
+      counterpart_name: m.events?.organizer?.full_name || '',
+      counterpart_org: m.events?.organizer?.organization_name || '',
     })));
 
     // Creators matched to sponsor
@@ -189,7 +191,7 @@ const Matches = () => {
       const creatorIds = creatorMatchData.map((m: any) => m.creator_id);
       const { data: creatorProfiles } = await supabase
         .from('users')
-        .select('id, full_name, platform, niche, followers_count, engagement_rate, pricing_per_post, verification_status, city')
+        .select('id, full_name, organization_name, platform, niche, followers_count, engagement_rate, pricing_per_post, verification_status, city')
         .in('id', creatorIds);
 
       const profileMap = Object.fromEntries((creatorProfiles || []).map(p => [p.id, p]));
@@ -286,7 +288,6 @@ const Matches = () => {
         message,
         campaign_details: {
           campaignType: 'event_promotion',
-          budget: myEvents.find(e => e.id === selectedEventId) ? undefined : undefined,
           deliverables: `Promote ${event?.name} across ${campaignTarget.platform}`,
         },
       });

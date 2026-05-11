@@ -7,6 +7,7 @@ export interface UserProfile {
   id: string;
   role: UserRole;
   full_name: string;
+  email?: string;
   organization_name: string;
   city: string;
   phone?: string;

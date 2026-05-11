@@ -150,7 +150,7 @@ const PublicEvents = () => {
                       {event.category}
                     </Badge>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                      <Users className="h-3 w-3" /> {event.expected_footfall.toLocaleString()} +
+                      <Users className="h-3 w-3" /> {(event.expected_footfall || 0).toLocaleString()} +
                     </span>
                   </div>
                   <CardTitle className="text-2xl group-hover:text-primary transition-colors leading-tight">{event.name}</CardTitle>

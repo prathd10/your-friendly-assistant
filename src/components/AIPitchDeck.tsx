@@ -57,7 +57,7 @@ const CoverSlide = ({ slide }: { slide: Slide }) => (
       </h1>
       <div className="space-y-4">
         {slide.tagline && (
-          <p className="text-xl md:text-3xl font-bold text-white/90 tracking-tight max-w-2xl leading-tight line-clamp-3">
+          <p className="text-xl md:text-3xl font-bold text-white/90 tracking-tight max-w-2xl leading-tight">
             {slide.tagline}
           </p>
         )}
@@ -91,14 +91,29 @@ const ContentSlide = ({ slide }: { slide: Slide }) => (
       {slide.content.map((bullet, idx) => (
         <li key={idx} className="flex items-start gap-5 group">
           <div className="mt-2 h-2.5 w-2.5 rounded-full border-2 border-primary bg-transparent group-hover:bg-primary transition-colors shrink-0 shadow-[0_0_8px_rgba(var(--primary),0.3)]" />
-          <p className="text-lg md:text-xl font-medium text-white/80 leading-snug tracking-tight line-clamp-3">
-            {bullet}
+          <p className="text-lg md:text-xl font-medium text-white/80 leading-snug tracking-tight">
+            {formatBulletText(bullet)}
           </p>
         </li>
       ))}
     </ul>
   </div>
 );
+
+const formatBulletText = (text: string): string => {
+  try {
+    const jsonMatch = text.match(/\{.*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      let formattedStr = '';
+      if (parsed.gender) formattedStr += `Gender: ${Array.isArray(parsed.gender) ? parsed.gender.join(', ') : parsed.gender} | `;
+      if (parsed.ageRange) formattedStr += `Age: ${Array.isArray(parsed.ageRange) ? parsed.ageRange.join('-') : parsed.ageRange} | `;
+      if (parsed.profession) formattedStr += `Profession: ${Array.isArray(parsed.profession) ? parsed.profession.join(', ') : parsed.profession}`;
+      return text.replace(jsonMatch[0], formattedStr.replace(/ \| $/, '')).trim();
+    }
+  } catch (e) {}
+  return text;
+};
 
 const formatMetricValue = (val: any): string => {
   if (!val) return 'Premium';
@@ -151,7 +166,7 @@ const MetricsSlide = ({ slide }: { slide: Slide }) => (
                 <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.6)]" />
                 <span className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-black">{m.label}</span>
               </div>
-              <span className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-tight break-words line-clamp-2">
+              <span className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-tight break-words">
                 {formatMetricValue(m.value)}
               </span>
             </div>
@@ -168,7 +183,7 @@ const MetricsSlide = ({ slide }: { slide: Slide }) => (
             <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
               <Sparkles className="h-2.5 w-2.5 text-primary" />
             </div>
-            <p className="text-white/60 text-base leading-relaxed font-medium line-clamp-3">{bullet}</p>
+            <p className="text-white/60 text-base leading-relaxed font-medium">{formatBulletText(bullet)}</p>
           </div>
         ))}
       </div>
@@ -178,11 +193,11 @@ const MetricsSlide = ({ slide }: { slide: Slide }) => (
 
 const TiersSlide = ({ slide }: { slide: Slide }) => (
   <div className="h-full w-full flex flex-col p-10 gap-6 relative overflow-hidden bg-[#0a0a0f]" style={{ width: '1280px', height: '720px' }}>
-    <div className="space-y-2 z-10">
+    <div className="space-y-2 z-10 mb-4">
       <div className="h-1.5 w-12 rounded-full bg-primary" />
       <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white uppercase italic">{slide.title}</h2>
     </div>
-    <div className="flex-1 grid grid-cols-3 gap-5 items-stretch z-10 pb-4">
+    <div className="flex-1 grid grid-cols-3 gap-5 items-stretch z-10 pb-4 mt-8">
       {(slide.tiers || []).map((tier, idx) => (
         <div
           key={idx}
@@ -206,7 +221,7 @@ const TiersSlide = ({ slide }: { slide: Slide }) => (
             {tier.perks.slice(0, 6).map((perk, i) => (
               <li key={i} className="flex items-start gap-2 text-[10px] text-white/60 leading-tight">
                 <CheckCircle2 className="h-2.5 w-2.5 text-primary shrink-0 mt-0.5" />
-                <span className="line-clamp-2">{perk}</span>
+                <span>{perk}</span>
               </li>
             ))}
           </ul>
@@ -225,7 +240,7 @@ const CtaSlide = ({ slide }: { slide: Slide }) => (
       </h2>
       <div className="space-y-3">
         {slide.content.map((line, idx) => (
-          <p key={idx} className="text-xl text-white/70 font-medium tracking-tight leading-relaxed">{line}</p>
+          <p key={idx} className="text-xl text-white/70 font-medium tracking-tight leading-relaxed">{formatBulletText(line)}</p>
         ))}
       </div>
       {slide.cta && (
@@ -300,13 +315,15 @@ const AIPitchDeck = ({ data, eventId }: AIPitchDeckProps) => {
           backgroundColor: '#0a0a0f',
           width: 1280,
           height: 720,
+          windowWidth: 1280,
+          windowHeight: 720,
           scrollX: 0,
           scrollY: 0,
           imageTimeout: 15000,
           onclone: (doc) => {
             const clonedEl = doc.getElementById(`pdf-slide-${i}`);
             if (clonedEl) {
-              clonedEl.style.position = 'fixed';
+              clonedEl.style.position = 'relative';
               clonedEl.style.top = '0';
               clonedEl.style.left = '0';
               clonedEl.style.visibility = 'visible';
@@ -468,15 +485,15 @@ const AIPitchDeck = ({ data, eventId }: AIPitchDeckProps) => {
       <div 
         aria-hidden="true"
         style={{ 
-          position: 'fixed',
-          left: 0,
-          top: 0,
+          position: 'absolute',
+          left: '-9999px',
+          top: '-9999px',
           width: '1280px',
           height: '720px',
           overflow: 'hidden',
           pointerEvents: 'none',
           zIndex: -1,
-          opacity: 0.01
+          opacity: 1
         }}
       >
         {data.slides.map((s, i) => (

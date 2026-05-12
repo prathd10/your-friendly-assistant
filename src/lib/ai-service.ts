@@ -277,87 +277,167 @@ export const generateMOUDraft = async (req: any) => {
   const event = req.event;
 
   const prompt = `
-You are a Senior Legal Counsel at an international law firm. 
+You are a Senior Legal Counsel at a top-tier international law firm. 
 Draft an EXHAUSTIVE, high-stakes, and legally robust Memorandum of Understanding (MOU).
-Follow the structure and tone of a formal legal contract.
+Follow the exact structure and tone of a formal, ironclad commercial contract. Do NOT summarize.
 
 PARTIES:
 - THE ORGANIZER: ${recipient?.organization_name || recipient?.full_name} (${recipient?.role})
 - THE PARTNER: ${otherUser?.organization_name || otherUser?.full_name} (${otherUser?.role})
-- PARTNER HANDLE: ${otherUser?.handle || otherUser?.full_name}
 
 EVENT DATA:
 - NAME: ${event?.name}
 - VENUE: ${event?.venue_name || event?.city}, ${event?.city}
 - DATE: ${event?.event_date}
 - PROJECTIONS: ${event?.expected_footfall?.toLocaleString()} attendees | ${event?.social_media_reach ? (event?.social_media_reach/1000).toFixed(0) + 'K+' : '25K+'} digital reach
-- FINANCIALS: ₹${req.campaign_details?.budget || event?.budget_required || '4,000'}
+- FINANCIALS: ₹${req.campaign_details?.budget || event?.budget_required || 'TBD'}
 
 REQUIRED STRUCTURE:
 
 1. TITLE: MEMORANDUM OF UNDERSTANDING (Centered)
-2. INTRODUCTION: Define parties with "hereinafter referred to as" terminology.
-3. PREAMBLE: Use at least three "WHEREAS" clauses defining the intent and nature of the collaboration.
-4. EVENT SCOPE: Detailed description of ${event?.name}, location, and projected impact.
-5. MUTUAL OBLIGATIONS:
-   - Specific, numbered obligations for THE ORGANIZER (Logistics, Branding, Support).
-   - Specific, numbered obligations for THE PARTNER (Content creation, Attendance, Reporting).
-6. FINANCIAL TERMS:
-   - Clause 6.1: Exact remuneration (₹${req.campaign_details?.budget || event?.budget_required || 'TBD'}).
-   - Clause 6.2: Payment schedule (e.g., 30 days post-event).
-   - Clause 6.3: Expense handling.
-7. LEGAL & INTELLECTUAL PROPERTY:
-   - Clause 7.1: Pre-existing vs Event-specific IP rights.
-   - Clause 7.2: Confidentiality obligations and exceptions.
-   - Clause 7.3: Liability, Indemnification, and Limitation of Liability.
-8. TERMINATION:
-   - Termination for Convenience (30-day notice).
-   - Termination for Cause (Material breach).
-9. SIGNATURES: Formal blocks for both parties.
+2. PREAMBLE: Use at least three "WHEREAS" clauses defining the intent and nature of the collaboration.
+3. EVENT SCOPE: Detailed description of the event, location, and projected impact.
+4. MUTUAL OBLIGATIONS:
+   - Detailed, numbered obligations for THE ORGANIZER (Logistics, Branding, Support).
+   - Detailed, numbered obligations for THE PARTNER (Content creation, Attendance, Reporting).
+5. FINANCIAL TERMS:
+   - Exact remuneration (₹${req.campaign_details?.budget || event?.budget_required || 'TBD'}).
+   - Payment schedule (e.g., 50% advance, 50% post-event) and tax handling.
+6. INTELLECTUAL PROPERTY:
+   - Pre-existing vs Event-specific IP rights.
+   - Licensing of logos and promotional materials.
+7. CONFIDENTIALITY & INDEMNIFICATION:
+   - Confidentiality obligations.
+   - Liability, Indemnification, and Limitation of Liability.
+8. TERMINATION & FORCE MAJEURE:
+   - Termination for Convenience and Cause.
+   - Force Majeure clauses.
+9. GOVERNING LAW & SIGNATURES: 
+   - Jurisdiction.
+   - Formal signature blocks for both parties.
 
 RULES:
-- Use formal, authoritative legal English.
-- UPPERCASE for all major section headers.
-- NO markdown bolding (**).
-- Ensure the document feels "exhaustive" and covers all possible points.
+- Use highly formal, authoritative legal English.
+- UPPERCASE for all major section headers (e.g., "1. EVENT SCOPE").
+- DO NOT use markdown bolding (**) or italics. Just plain text with good spacing.
+- Ensure the document feels exhaustive, professional, and ready to sign.
 - Include placeholders like "[Effective Date]" or "[Assumed Address]" where necessary.
 `;
 
   try {
     const text = await callOpenAI([
-      { role: "system", content: "You are a Senior Legal Counsel. Draft a comprehensive, exhaustive legal MOU." },
+      { role: "system", content: "You are a Senior Legal Counsel. Draft a comprehensive, exhaustive legal MOU without any markdown symbols." },
       { role: "user", content: prompt }
-    ], "gpt-4o-mini", 0.1);
+    ], "gpt-4o-mini", 0.2);
     
-    return text || `MEMORANDUM OF UNDERSTANDING\n\n[DRAFT FAILED: Manual drafting required for ${event?.name}]`;
+    return text || `MEMORANDUM OF UNDERSTANDING\n\n[DRAFT FAILED]`;
   } catch (error) {
     console.error("MOU Draft Error:", error);
+    
     // Exhaustive fallback template
-    return `MEMORANDUM OF UNDERSTANDING
+    return `MEMORANDUM OF UNDERSTANDING (MOU)
+====================================================================
 
-THIS MEMORANDUM OF UNDERSTANDING (hereinafter "MOU") is entered into on this [Effective Date], by and between ${recipient?.organization_name || recipient?.full_name} (The Organizer) and ${otherUser?.organization_name || otherUser?.full_name} (The Partner).
+This Memorandum of Understanding (hereinafter referred to as the "MOU" or "Agreement") is made and entered into on this ____ day of ____________, 20__ (the "Effective Date").
 
+BY AND BETWEEN
+
+${recipient?.organization_name || recipient?.full_name || 'The Organizer'} (hereinafter referred to as "THE ORGANIZER"), having its principal place of operations at [Organizer Address], 
+
+AND
+
+${otherUser?.organization_name || otherUser?.full_name || 'The Partner'} (hereinafter referred to as "THE PARTNER"), having its principal place of operations at [Partner Address].
+
+(THE ORGANIZER and THE PARTNER may individually be referred to as a "Party" and collectively as the "Parties").
+
+====================================================================
 PREAMBLE
-WHEREAS, The Organizer is hosting "${event?.name || 'The Event'}" and requires professional collaboration;
-WHEREAS, The Partner possesses the creative expertise to enhance the Event's impact;
-NOW, THEREFORE, the Parties agree as follows:
+====================================================================
+WHEREAS, THE ORGANIZER is organizing and executing the event known as "${event?.name || 'The Event'}" (hereinafter referred to as "THE EVENT");
+WHEREAS, THE EVENT is scheduled to occur on ${event?.event_date || '[Date]'} at ${event?.venue_name || event?.city || '[Venue]'} with an anticipated footfall of ${event?.expected_footfall?.toLocaleString() || '[Footfall]'} attendees and an estimated digital reach of ${event?.social_media_reach ? (event?.social_media_reach/1000).toFixed(0) + 'K+' : '[Reach]'};
+WHEREAS, THE PARTNER possesses distinct capabilities, assets, and market presence that align with the objectives of THE EVENT;
+WHEREAS, the Parties wish to establish a formal framework for their collaboration to ensure mutual benefit, clear expectations, and the successful execution of THE EVENT;
 
-1. EVENT SCOPE
-The Event "${event?.name}" will take place on ${event?.event_date} at ${event?.city}. Estimated audience: ${event?.expected_footfall?.toLocaleString() || 'Premium'}.
+NOW, THEREFORE, in consideration of the mutual promises and covenants contained herein, the Parties agree as follows:
 
-2. FINANCIALS
-Total consideration of ₹${req.campaign_details?.budget || event?.budget_required || 'TBD'} to be paid as per terms.
+====================================================================
+1. SCOPE AND PURPOSE OF THE COLLABORATION
+====================================================================
+1.1 Objective: The primary objective of this MOU is to define the roles, responsibilities, and financial obligations of both Parties concerning THE PARTNER's sponsorship, participation, or services rendered for THE EVENT.
+1.2 Non-Exclusivity: Unless explicitly stated otherwise in a separate Addendum, this collaboration is non-exclusive, allowing THE ORGANIZER to engage with other partners.
 
-3. INTELLECTUAL PROPERTY & LEGAL
-All pre-existing IP remains with the respective Party. Both Parties agree to strict confidentiality.
+====================================================================
+2. OBLIGATIONS OF THE ORGANIZER
+====================================================================
+THE ORGANIZER shall be responsible for the following deliverables:
+2.1 Event Execution: Ensuring THE EVENT is conducted safely, professionally, and in accordance with the proposed schedule.
+2.2 Branding & Visibility: Providing THE PARTNER with the agreed-upon brand placements across marketing collaterals and digital campaigns.
+2.3 Access & Amenities: Facilitating necessary entry passes, VIP access, and on-ground spatial allocations.
+2.4 Reporting: Providing a comprehensive post-event report detailing footfall, digital impressions, and brand reach metrics within thirty (30) days following the conclusion of THE EVENT.
 
-4. SIGNATURES
+====================================================================
+3. OBLIGATIONS OF THE PARTNER
+====================================================================
+THE PARTNER shall be responsible for the following obligations:
+3.1 Timely Deliverables: Providing all high-resolution logos, branding assets, and promotional materials to THE ORGANIZER no later than fourteen (14) days prior to THE EVENT.
+3.2 Activation Guidelines: Ensuring any on-ground activation adheres to the safety and aesthetic guidelines provided by THE ORGANIZER.
+3.3 Cross-Promotion: Actively promoting THE EVENT across THE PARTNER's official social media channels.
+3.4 Financial Commitment: Discharging the agreed-upon financial commitments as detailed in Section 4.
 
-__________________________
-For ${recipient?.organization_name || recipient?.full_name}
+====================================================================
+4. FINANCIAL TERMS AND CONSIDERATION
+====================================================================
+4.1 Total Consideration: In exchange for the deliverables provided by THE ORGANIZER, THE PARTNER agrees to provide a total consideration of ₹${req.campaign_details?.budget || event?.budget_required || '[Amount]'} (the "Consideration").
+4.2 Payment Schedule: The Consideration shall be paid in the following tranches:
+    a) Fifty percent (50%) as an initial advance upon the execution of this MOU.
+    b) Fifty percent (50%) no later than seven (7) days prior to THE EVENT date.
+4.3 Taxes: All amounts are exclusive of applicable taxes (e.g., GST), which shall be borne by THE PARTNER.
+4.4 Invoicing: THE ORGANIZER shall raise a formal, tax-compliant invoice for all payments.
 
-__________________________
-For ${otherUser?.organization_name || otherUser?.full_name}`;
+====================================================================
+5. INTELLECTUAL PROPERTY RIGHTS (IPR)
+====================================================================
+5.1 Pre-existing IP: All pre-existing trademarks, logos, and intellectual property belonging to either Party shall remain their sole property.
+5.2 Limited License: THE PARTNER grants THE ORGANIZER a non-exclusive, limited license to use its logos solely for the promotion of THE EVENT.
+5.3 Event Content: All media generated during THE EVENT remains the intellectual property of THE ORGANIZER, but THE PARTNER is granted a license to use media featuring their own branding for promotional purposes.
+
+====================================================================
+6. CONFIDENTIALITY & INDEMNIFICATION
+====================================================================
+6.1 Confidentiality: Both Parties agree to maintain strict confidentiality regarding the financial terms and proprietary strategies outlined in this MOU.
+6.2 Indemnity: Each Party agrees to indemnify the other Party from any third-party claims arising from gross negligence or breach of this MOU.
+6.3 Limitation: Maximum liability shall be capped at the total Consideration amount specified in Section 4.1.
+
+====================================================================
+7. FORCE MAJEURE & TERMINATION
+====================================================================
+7.1 Force Majeure: Neither Party shall be held liable for failure in performance resulting from circumstances beyond reasonable control (e.g., acts of God, pandemics, severe weather).
+7.2 Termination: This MOU may be terminated by mutual written agreement, or by either Party immediately for a material breach that is not rectified within seven (7) days of notice.
+
+====================================================================
+8. GOVERNING LAW AND DISPUTE RESOLUTION
+====================================================================
+This MOU shall be governed by the laws of India. Disputes shall be resolved through good faith negotiations. If unresolved within thirty (30) days, the dispute shall be subject to the exclusive jurisdiction of the courts in [City/State of Organizer].
+
+====================================================================
+SIGNATURES
+====================================================================
+
+IN WITNESS WHEREOF, the authorized representatives of the Parties have executed this Memorandum of Understanding as of the Effective Date.
+
+FOR THE ORGANIZER:
+Signature: ___________________________
+Name:      ${recipient?.full_name || '[Name]'}
+Title:     ${recipient?.role || '[Title]'}
+Company:   ${recipient?.organization_name || '[Company Name]'}
+Date:      ___________________________
+
+FOR THE PARTNER:
+Signature: ___________________________
+Name:      ${otherUser?.full_name || '[Name]'}
+Title:     ${otherUser?.role || '[Title]'}
+Company:   ${otherUser?.organization_name || '[Company Name]'}
+Date:      ___________________________`;
   }
 };
 

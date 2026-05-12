@@ -24,7 +24,7 @@ interface AIVideoGeneratorProps {
   eventId?: string;
 }
 
-const SCENE_DURATION_MS = 6000;
+const SCENE_DURATION_MS = 3000;
 
 const AIVideoGenerator = ({ eventData, media, script, eventId }: AIVideoGeneratorProps) => {
   const navigate = useNavigate();
@@ -260,19 +260,56 @@ const AIVideoGenerator = ({ eventData, media, script, eventId }: AIVideoGenerato
     for (let i = 0; i < script.scenes.length; i++) {
       const scene = script.scenes[i];
 
-      // Load background
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = getSceneBackground(i);
-      await new Promise(res => { img.onload = res; img.onerror = res; setTimeout(res, 3000); });
+      // Load background robustly with CORS and fallback
+      const loadBackground = async (url: string): Promise<HTMLImageElement | null> => {
+        try {
+          // Add a minor cache buster for CORS if needed, but fetch handles it better
+          const fetchUrl = url.includes('pollinations') ? url : `${url}${url.includes('?') ? '&' : '?'}cb=${Date.now()}`;
+          const res = await fetch(fetchUrl, { mode: 'cors' });
+          if (!res.ok) throw new Error('Fetch failed');
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          
+          return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => {
+              // We won't revoke immediately so canvas can use it, but memory is fine for a few images
+              resolve(img);
+            };
+            img.onerror = () => resolve(null);
+            img.src = objectUrl;
+          });
+        } catch (e) {
+          console.warn('Failed to load image via fetch', url);
+          // Fallback to Image object approach if fetch CORS fails
+          return new Promise(resolve => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = url;
+            setTimeout(() => resolve(null), 15000);
+          });
+        }
+      };
+
+      let img = await loadBackground(getSceneBackground(i));
+      if (!img && !getSceneBackground(i).includes('unsplash')) {
+         // Fallback Unsplash image
+         img = await loadBackground(`https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=1280&q=80`);
+      }
+
+
+      // Force total video to be exactly 15 seconds
+      const DURATION_PER_SCENE_MS = 15000 / script.scenes.length;
 
       // Animate this scene
       await new Promise<void>(resolve => {
         const start = performance.now();
         const frame = (now: number) => {
           const elapsed = now - start;
-          const progress = Math.min(elapsed / SCENE_DURATION_MS, 1);
-          renderFrame(ctx, img.naturalHeight > 0 ? img : null, scene, progress, i, script.scenes.length);
+          const progress = Math.min(elapsed / DURATION_PER_SCENE_MS, 1);
+          renderFrame(ctx, img && img.naturalHeight > 0 ? img : null, scene, progress, i, script.scenes.length);
           if (progress < 1) requestAnimationFrame(frame);
           else resolve();
         };
@@ -447,7 +484,7 @@ const AIVideoGenerator = ({ eventData, media, script, eventId }: AIVideoGenerato
 
       {isRecording && (
         <p className="text-xs text-muted-foreground text-center animate-pulse">
-          Rendering {script.scenes.length} scenes × {SCENE_DURATION_MS / 1000}s each — do not close this window
+          Rendering {script.scenes.length} scenes into a 15-second video — do not close this window
         </p>
       )}
     </div>
